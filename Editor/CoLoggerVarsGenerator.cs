@@ -43,6 +43,12 @@ namespace CoradoLog
             var correctCode = sourceBuilder.Replace("{senders}", senders.ToString());
             correctCode = correctCode.Replace("{contexts}", contexts.ToString());
             
+            var directory = Application.dataPath + "/CoradoLogGenerated/";
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            
             var path = Application.dataPath + "/CoradoLogGenerated/CoLoggerVars.cs";
             File.WriteAllText(path, correctCode);
             

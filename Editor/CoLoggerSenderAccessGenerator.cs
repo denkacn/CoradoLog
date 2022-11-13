@@ -23,7 +23,7 @@ namespace CoradoLog
             CoLogger.Log(message, Sender, Context, EDebugImportance.All, ex);
         }
 
-        public static void Log(string message, EDebugImportance importance = EDebugImportance.All, Exception ex = null)
+        public static void Log(string message, EDebugImportance importance, Exception ex = null)
         {
             CoLogger.Log(message, Sender, Context, importance, ex);
         }
@@ -37,6 +37,11 @@ namespace CoradoLog
             var correctCode = sourceBuilder.Replace("{senderName}", senderName);
             correctCode = correctCode.Replace("{contextName}", "Debug");
 
+            var directory = Application.dataPath + "/CoradoLogGenerated/";
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
             
             var path = Application.dataPath + "/CoradoLogGenerated/Debug" + senderName + ".cs";
             File.WriteAllText(path, correctCode);

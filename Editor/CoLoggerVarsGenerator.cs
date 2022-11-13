@@ -10,7 +10,7 @@ namespace CoradoLog.Editor
         public void GenerateVarsClass(string[] senderNames, string[] contextNames)
         {
             var sourceBuilder = @"
-namespace CoradoLogSystem
+namespace CoradoLog
 {
     public static class CoLoggerVars
     {

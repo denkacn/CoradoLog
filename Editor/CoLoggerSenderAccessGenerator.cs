@@ -11,7 +11,7 @@ namespace CoradoLog.Editor
             var sourceBuilder = @"
 using System;
 
-namespace CoradoLogSystem
+namespace CoradoLog
 {
     public static class Debug{senderName}
     {

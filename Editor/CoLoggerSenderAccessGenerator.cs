@@ -37,15 +37,12 @@ namespace CoradoLog
             var correctCode = sourceBuilder.Replace("{senderName}", senderName);
             correctCode = correctCode.Replace("{contextName}", "Debug");
 
-            var directory = Application.dataPath + "/CoradoLogGenerated/";
-            if (!Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
+            var directoryPath = Application.dataPath + "/CoradoLogGenerated/";
+            CoLoggerTools.CheckDirectory(directoryPath);
             
             var path = Application.dataPath + "/CoradoLogGenerated/Debug" + senderName + ".cs";
-            File.WriteAllText(path, correctCode);
-            
+            CoLoggerTools.WriteFile(path, correctCode);
+
             AssetDatabase.Refresh();
         }
     }

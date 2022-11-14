@@ -6,17 +6,17 @@ namespace CoradoLog
 {
     public static class CoLogger
     {
-        public const string CONTEXT_SYSTEM = "System";
-        public const string CONTEXT_DEBUG = "Debug";
+        private const string CONTEXT_SYSTEM = "System";
 
         private static CoLoggerSettings _settings;
         private static string _senders;
         private static ICoLoggerTransmitter _transmitter;
 
-        internal static void Init(CoLoggerSettings settings)
+        public static void Init(CoLoggerSettings settings)
         {
             _settings = settings;
-            Log("DebugIt Initialize", "System", CONTEXT_SYSTEM, EDebugImportance.All);
+            
+            Log("CoLogger Initialize", "System", CONTEXT_SYSTEM);
         }
 
         public static void SetTransmitter(ICoLoggerTransmitter transmitter)
@@ -32,6 +32,7 @@ namespace CoradoLog
         public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All)
         {
             var sender = "System";
+            
             if (!string.IsNullOrEmpty(_senders))
                 sender = _senders;
 
@@ -68,11 +69,10 @@ namespace CoradoLog
                     DateTime.Now, ex.ToString()));
             }
 
-            if (_transmitter != null)
-                _transmitter.ResendMe(message, sender, context, importance);
+            _transmitter?.ResendMe(message, sender, context, importance);
         }
 
-        internal static void AddContext(string context)
+        public static void AddContext(string context)
         { 
             _settings.AddContext(context);
         }

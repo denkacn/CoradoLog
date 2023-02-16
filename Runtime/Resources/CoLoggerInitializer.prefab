@@ -60,10 +60,6 @@ MonoBehaviour:
       IsEnable: 1
     - SenderName: Debug
       IsEnable: 1
-    - SenderName: Denis
-      IsEnable: 1
-    - SenderName: Anatoliy
-      IsEnable: 1
     ContextSettings:
     - ContextName: System
       IsEnable: 1
@@ -71,4 +67,5 @@ MonoBehaviour:
     - ContextName: Debug
       IsEnable: 1
       DrawColor: {r: 0.8235295, g: 0.8235295, b: 0.8235295, a: 1}
+    IsAddContextInRuntime: 1
   _deffSender: 

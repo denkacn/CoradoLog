@@ -14,7 +14,7 @@ namespace CoradoLog.Editor
             DrawVarsGenerator();
             DrawSenderGenerator();
         }
-        
+
         private void DrawVarsGenerator()
         {
             GUILayout.Space(10);

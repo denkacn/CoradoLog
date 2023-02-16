@@ -23,12 +23,16 @@ namespace CoradoLog
 
         public List<string> GetSenderNames()
         {
-            return _settings.SendeSettings.Select(sender => sender.SenderName).ToList();
+            return _settings != null
+                ? _settings.SendeSettings.Select(sender => sender.SenderName).ToList()
+                : new List<string>();
         }
 
         public List<string> GetSeContextNames()
         {
-            return _settings.ContextSettings.Select(context => context.ContextName).ToList();
+            return _settings != null
+                ? _settings.ContextSettings.Select(context => context.ContextName).ToList()
+                : new List<string>();
         }
     }
 }

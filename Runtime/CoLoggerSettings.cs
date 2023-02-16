@@ -4,8 +4,9 @@ using UnityEngine;
 
 namespace CoradoLog
 {
+    [CreateAssetMenu(fileName = "CoLoggerSettingsInstance", menuName = "CoLogger/CoLoggerSettings", order = 1)]
     [Serializable]
-    public class CoLoggerSettings
+    public class CoLoggerSettings : ScriptableObject
     {
         public EDebugImportance Importance;
         
@@ -17,8 +18,17 @@ namespace CoradoLog
             new ImportanceSetting(EDebugImportance.Critical, Color.red)
         };
         
-        public List<SenderSetting> SendeSettings;
-        public List<ContextSetting> ContextSettings;
+        public List<SenderSetting> SendeSettings = new List<SenderSetting>()
+        {
+            new SenderSetting("System"),
+            new SenderSetting("Debug")
+        };
+
+        public List<ContextSetting> ContextSettings = new List<ContextSetting>()
+        {
+            new ContextSetting("System", new Color32(146, 181, 197, 255)),
+            new ContextSetting("Debug", new Color32(210, 210, 210, 255))
+        };
 
         public bool IsAddContextInRuntime = true;
         
@@ -57,6 +67,14 @@ namespace CoradoLog
     {
         public string SenderName;
         public bool IsEnable;
+        
+        public SenderSetting(){}
+        
+        public SenderSetting(string senderName, bool isEnable = true)
+        {
+            SenderName = senderName;
+            IsEnable = isEnable;
+        }
     }
 
     [Serializable]
@@ -65,6 +83,15 @@ namespace CoradoLog
         public string ContextName;
         public bool IsEnable;
         public Color DrawColor;
+        
+        public ContextSetting(){}
+
+        public ContextSetting(string contextName, Color drawColor, bool isEnable = true)
+        {
+            ContextName = contextName;
+            IsEnable = isEnable;
+            DrawColor = drawColor;
+        }
     }
 
     [Serializable]

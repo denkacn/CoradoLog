@@ -27,7 +27,7 @@ namespace CoradoLog
             CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, ex);
         }
 
-        public static void Log(string message, string tag = "", EDebugImportance importance, Exception ex = null)
+        public static void Log(string message, EDebugImportance importance, string tag = "", Exception ex = null)
         {
             CoLogger.Log(message, Sender, Context, tag, importance, ex);
         }
@@ -35,6 +35,11 @@ namespace CoradoLog
         public static void Log(string message, string context, string tag = "", EDebugImportance importance = EDebugImportance.All, Exception ex = null)
         {
             CoLogger.Log(message, Sender, context, tag, importance, ex);
+        }
+
+        public static void LogError(string message, string tag = "")
+        {
+            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, new Exception());
         }
     }
 }";

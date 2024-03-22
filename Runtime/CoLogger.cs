@@ -42,7 +42,7 @@ namespace CoradoLog
             Log(message, sender, context, importance);
         }
         
-        public static void Log(string message, string context, string tag = "", EDebugImportance importance = EDebugImportance.All)
+        public static void Log(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All)
         {
             var sender = SENDER_SYSTEM;
             

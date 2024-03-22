@@ -17,29 +17,34 @@ namespace CoradoLog
         private const string Sender = ""{senderName}"";
         private const string Context = ""{contextName}"";
         
-        public static void Log(string message, string tag = "", Exception ex = null)
+        public static void Log(string message, Exception ex = null)
         {
-            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, ex);
+            CoLogger.Log(message, Sender, Context, string.Empty, EDebugImportance.All, ex);
         }
 
-        public static void Log(string message, string tag = "", Exception ex = null)
+        public static void Log(string message, EDebugImportance importance, Exception ex = null)
         {
-            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, ex);
+            CoLogger.Log(message, Sender, Context, string.Empty, importance, ex);
+        }
+        
+        public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All, Exception ex = null)
+        {
+            CoLogger.Log(message, Sender, context, string.Empty, importance, ex);
         }
 
-        public static void Log(string message, EDebugImportance importance, string tag = "", Exception ex = null)
+        public static void LogTag(string message, string tag = "", EDebugImportance importance = EDebugImportance.All, Exception ex = null)
         {
             CoLogger.Log(message, Sender, Context, tag, importance, ex);
         }
         
-        public static void Log(string message, string context, string tag = "", EDebugImportance importance = EDebugImportance.All, Exception ex = null)
+        public static void LogError(string message, Exception ex = null)
         {
-            CoLogger.Log(message, Sender, context, tag, importance, ex);
+            CoLogger.Log(message, Sender, Context, string.Empty, EDebugImportance.All, ex);
         }
-
-        public static void LogError(string message, string tag = "")
+        
+        public static void LogTagError(string message, string tag = "", Exception ex = null)
         {
-            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, new Exception());
+            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, ex);
         }
     }
 }";

@@ -19,7 +19,7 @@ namespace CoradoLog
         {
             _settings = settings;
             
-            Log("CoLogger Initialize", CONTEXT_SYSTEM, EDebugImportance.All);
+            Log("CoLogger Initialize", CONTEXT_SYSTEM);
         }
 
         public static void SetTransmitter(ICoLoggerTransmitter transmitter)
@@ -52,7 +52,7 @@ namespace CoradoLog
             Log(message, sender, context, tag, importance);
         }
 
-        public static void Log(string message, string sender, string context, string tag = "", EDebugImportance importance = EDebugImportance.All, Exception ex = null)
+        public static void Log(string message, string sender, string context, string tag, EDebugImportance importance = EDebugImportance.All, Exception ex = null)
         {
             if (!_settings.IsSenderExist(sender)) return;
             if ((int) importance < (int) _settings.Importance) return;

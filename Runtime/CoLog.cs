@@ -18,9 +18,9 @@ namespace CoradoLog
             _importance = importance;
         }
 
-        public void Log(string message, Exception ex = null)
+        public void Log(string message, string tag = "", Exception ex = null)
         {
-            CoLogger.Log(message, _sender, _context, _importance, ex);
+            CoLogger.Log(message, _sender, _context, tag, _importance, ex);
         }
     }
 }

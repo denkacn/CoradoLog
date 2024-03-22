@@ -1,5 +1,4 @@
-﻿using System.IO;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace CoradoLog.Editor
@@ -18,19 +17,24 @@ namespace CoradoLog
         private const string Sender = ""{senderName}"";
         private const string Context = ""{contextName}"";
         
-        public static void Log(string message, Exception ex = null)
+        public static void Log(string message, string tag = "", Exception ex = null)
         {
-            CoLogger.Log(message, Sender, Context, EDebugImportance.All, ex);
+            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, ex);
         }
 
-        public static void Log(string message, EDebugImportance importance, Exception ex = null)
+        public static void Log(string message, string tag = "", Exception ex = null)
         {
-            CoLogger.Log(message, Sender, Context, importance, ex);
+            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, ex);
+        }
+
+        public static void Log(string message, string tag = "", EDebugImportance importance, Exception ex = null)
+        {
+            CoLogger.Log(message, Sender, Context, tag, importance, ex);
         }
         
-        public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All, Exception ex = null)
+        public static void Log(string message, string context, string tag = "", EDebugImportance importance = EDebugImportance.All, Exception ex = null)
         {
-            CoLogger.Log(message, Sender, context, importance, ex);
+            CoLogger.Log(message, Sender, context, tag, importance, ex);
         }
     }
 }";

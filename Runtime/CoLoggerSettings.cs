@@ -30,6 +30,9 @@ namespace CoradoLog
             new ContextSetting("Debug", new Color32(210, 210, 210, 255))
         };
 
+        public Color TagColor = Color.green;
+        public List<string> Tags = new List<string>(); 
+
         public bool IsAddContextInRuntime = true;
         
         public bool IsSenderExist(string senderName)
@@ -44,13 +47,18 @@ namespace CoradoLog
             return context != null && context.IsEnable;
         }
 
+        public bool IsTagExist(string tag)
+        {
+            return Tags.Contains(tag);
+        }
+        
         public void AddContext(string contextName)
         {
             var context = ContextSettings.Find(s => s.ContextName == contextName);
             if (context != null) return;
 
             ContextSettings.Add(new ContextSetting()
-                { ContextName = contextName, DrawColor = Color.magenta, IsEnable = true });
+                { ContextName = contextName, DrawColor = Color.magenta, IsEnable = true, IsRuntime = true });
         }
     }
 
@@ -83,6 +91,9 @@ namespace CoradoLog
         public string ContextName;
         public bool IsEnable;
         public Color DrawColor;
+
+        [HideInInspector]
+        public bool IsRuntime;
         
         public ContextSetting(){}
 

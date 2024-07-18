@@ -26,7 +26,7 @@ namespace CoradoLog.Editor
                 var initiator = (target as CoLoggerInitiator);
                 var generator = new CoLoggerVarsGenerator();
                 generator.GenerateVarsClass(initiator.GetSenderNames().ToArray(),
-                    initiator.GetSeContextNames().ToArray());
+                    initiator.GetSeContextNames().ToArray(), initiator.GeneratePath);
             } 
         }
 
@@ -47,7 +47,7 @@ namespace CoradoLog.Editor
                     var selectedName = names[_selectedIndex];
 
                     var generator = new CoLoggerSenderAccessGenerator();
-                    generator.GenerateSenderClass(selectedName);
+                    generator.GenerateSenderClass(selectedName, initiator.GeneratePath);
                 } 
             }
         }

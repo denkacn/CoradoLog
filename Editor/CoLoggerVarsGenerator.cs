@@ -7,7 +7,7 @@ namespace CoradoLog.Editor
 {
     public class CoLoggerVarsGenerator
     {
-        public void GenerateVarsClass(string[] senderNames, string[] contextNames)
+        public void GenerateVarsClass(string[] senderNames, string[] contextNames, string generatePath)
         {
             var sourceBuilder = @"
 namespace CoradoLog
@@ -43,10 +43,10 @@ namespace CoradoLog
             var correctCode = sourceBuilder.Replace("{senders}", senders.ToString());
             correctCode = correctCode.Replace("{contexts}", contexts.ToString());
             
-            var directoryPath = Application.dataPath + "/CoradoLogGenerated/";
+            var directoryPath = Application.dataPath + "/" + generatePath + "CoradoLogGenerated/";
             CoLoggerTools.CheckDirectory(directoryPath);
 
-            var path = Application.dataPath + "/CoradoLogGenerated/CoLoggerVars.cs";
+            var path = Application.dataPath + "/" + generatePath + "CoradoLogGenerated/CoLoggerVars.cs";
             CoLoggerTools.WriteFile(path, correctCode);
 
             AssetDatabase.Refresh();

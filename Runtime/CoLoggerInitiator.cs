@@ -6,9 +6,12 @@ namespace CoradoLog
 {
     public class CoLoggerInitiator : MonoBehaviour
     {
+        public string GeneratePath => _generatePath;
+        
         [SerializeField] private CoLoggerSettings _settings;
         [SerializeField] private string _deffSender;
-
+        [SerializeField] private string _generatePath;
+        
         void Awake()
         {
             CoLogger.Init(_settings);

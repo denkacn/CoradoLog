@@ -39,7 +39,7 @@ namespace CoradoLog
             if (!string.IsNullOrEmpty(_senders))
                 sender = _senders;
 
-            Log(message, sender, context, importance);
+            Log(message, sender, context, string.Empty, importance);
         }
         
         public static void Log(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All)

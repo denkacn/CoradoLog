@@ -92,8 +92,8 @@ namespace CoradoLog
         public bool IsEnable;
         public Color DrawColor;
 
-        [HideInInspector]
-        public bool IsRuntime;
+        //[HideInInspector]
+        public bool IsRuntime = false;
         
         public ContextSetting(){}
 

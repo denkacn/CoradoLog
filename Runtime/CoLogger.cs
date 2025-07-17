@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -14,12 +15,33 @@ namespace CoradoLog
         private static CoLoggerSettings _settings;
         private static string _senders;
         private static ICoLoggerTransmitter _transmitter;
-
+        private static CoLoggerFileWriter _writer;
+        
         public static void Init(CoLoggerSettings settings)
         {
             _settings = settings;
             
+            new GameObject("CoLoggerLifeTimeCycleController").AddComponent<CoLoggerLifeTimeCycle>();
+
+            if (_settings.IsLogToFile)
+            {
+                EnableFileWriter(Application.dataPath + _settings.FileWriterPath);
+            }
+            
             Log("CoLogger Initialize", CONTEXT_SYSTEM);
+        }
+        
+        public static void EnableFileWriter(string path)
+        {
+            if (_writer != null) return;
+            
+            var exeDir = Path.GetDirectoryName(path);
+            var logFilePath = Path.Combine(exeDir,
+                "cologger_" + Guid.NewGuid().ToString().Replace("-", "_") + "_" +
+                DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".txt");
+                
+            _writer = new CoLoggerFileWriter();
+            _writer.Init(logFilePath);
         }
 
         public static void SetTransmitter(ICoLoggerTransmitter transmitter)
@@ -75,17 +97,22 @@ namespace CoradoLog
             var formatContext = GetContextFormat(context);
             var formatTag = GetTagFormat(tag);
 
+            string correctLogString;
+
             if (ex == null)
             {
-                Debug.Log(string.Format("{3} [{1}] [{2}] {4}: {0}", formatMessage, sender, formatContext, DateTime.Now, formatTag));
+                correctLogString = string.Format("{3} [{1}] [{2}] {4}: {0}", formatMessage, sender, formatContext, DateTime.Now, formatTag);
             }
             else
             {
-                Debug.LogError(string.Format("{3} [{1}] [{2}] {5}: {0}\n{4}", formatMessage, sender, formatContext,
-                    DateTime.Now, ex.ToString(), formatTag));
+                correctLogString = string.Format("{3} [{1}] [{2}] {5}: {0}\n{4}", formatMessage, sender, formatContext, DateTime.Now, ex, formatTag);
             }
 
+            Debug.Log(correctLogString);
+            
             _transmitter?.ResendMe(message, sender, context, importance);
+
+            _writer?.Write(correctLogString);
         }
 
         public static void AddContext(string context)
@@ -131,6 +158,13 @@ namespace CoradoLog
 
             return string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte) (color.r*255f), (byte) (color.g*255f),
                 (byte) (color.b*255f), message);
+        }
+
+        public static void Discard()
+        {
+            Log("CoLogger Discard", CONTEXT_SYSTEM);
+            
+            _writer?.Discard();
         }
     }
 

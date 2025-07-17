@@ -34,6 +34,9 @@ namespace CoradoLog
         public List<string> Tags = new List<string>(); 
 
         public bool IsAddContextInRuntime = true;
+
+        public bool IsLogToFile = false;
+        public string FileWriterPath = "";
         
         public bool IsSenderExist(string senderName)
         {

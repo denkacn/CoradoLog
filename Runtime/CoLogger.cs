@@ -73,6 +73,22 @@ namespace CoradoLog
             _senders = senders;
         }
 
+        public static void Log(string message, EDebugImportance importance = EDebugImportance.All)
+        {
+            var sender = SENDER_SYSTEM;
+            var context = CONTEXT_SYSTEM;
+            
+            Log(message, sender, context, string.Empty, importance);
+        }
+        
+        public static void LogError(string message, Exception ex, EDebugImportance importance = EDebugImportance.All)
+        {
+            var sender = SENDER_SYSTEM;
+            var context = CONTEXT_SYSTEM;
+            
+            Log(message, sender, context, string.Empty, importance, ex);
+        }
+
         public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All)
         {
             var sender = SENDER_SYSTEM;

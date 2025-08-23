@@ -9,9 +9,13 @@ namespace CoradoLog
     {
         private StringBuilder _htmlContent;
         private string _logFilePath;
+        private bool _isOnlyCoLoggerLogs;
         
-        public void Init()
+        public void Init(bool isOnlyCoLoggerLogs, string filePath)
         {
+            _isOnlyCoLoggerLogs = isOnlyCoLoggerLogs;
+            _logFilePath = filePath;
+            
             Application.logMessageReceived += HandleLog;
             InitializeHtmlFile();
         }
@@ -19,12 +23,11 @@ namespace CoradoLog
         public void Discard()
         {
             Application.logMessageReceived -= HandleLog;
-            //File.Delete(_logFilePath);
         }
 
         private void InitializeHtmlFile()
         {
-            _logFilePath = Path.Combine(Application.dataPath, "debug_log.html");
+            //_logFilePath = Path.Combine(Application.dataPath, "debug_log.html");
             _htmlContent = new StringBuilder();
 
             _htmlContent.AppendLine(@"<!DOCTYPE html>
@@ -124,6 +127,8 @@ namespace CoradoLog
             <br>
             <button class='toggle-btn' onclick='toggleAll(true)'>Expand</button>
             <button class='toggle-btn' onclick='toggleAll(false)'>Collapse</button>
+            <button class='toggle-btn' onclick='groupLogs()'>Group</button>
+            <button class='toggle-btn' onclick='ungroupLogs()'>Ungroup</button>
         </div>
     </div>
     <div id='logContainer'>");
@@ -133,15 +138,18 @@ namespace CoradoLog
 
         private void HandleLog(string logString, string stackTrace, LogType type)
         {
+            if (_isOnlyCoLoggerLogs && !logString.Contains("[CL]")) return;
+            
             var timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var formattedMessage = FormatColoredMessage(logString);
             
             var logEntry = $@"
-        <div class='log-entry' id='entry_{timestamp.Replace(":", "-")}'>
+        <div class='log-entry' id='entry_{timestamp.Replace(":", "-")}' data-message='{EscapeHtml(logString) + type}'>
             <div class='log-header' onclick='toggleLog(this)'>
                 <div>
                     <span class='log-type type-{type.ToString().ToLower()}'>{type.ToString()}</span>
                     <span class='log-message'>{formattedMessage}</span>
+                    <span class='log-count' style='color: #999; margin-left: 6px;'>(x1)</span>
                 </div>
                 <span class='arrow'>▼</span>
             </div>
@@ -175,22 +183,72 @@ namespace CoradoLog
         }
 
         function toggleAll(expand) {
-    const entries = document.querySelectorAll('.log-entry');
-    entries.forEach(entry => {
-        const content = entry.querySelector('.log-content');
-        const header = entry.querySelector('.log-header');
-        //const arrow = header.querySelector('span:last-child');
-        const arrow = entry.querySelector('.arrow');
+            const entries = document.querySelectorAll('.log-entry');
+            entries.forEach(entry => {
+                const content = entry.querySelector('.log-content');
+                const header = entry.querySelector('.log-header');
+                //const arrow = header.querySelector('span:last-child');
+                const arrow = entry.querySelector('.arrow');
 
-        if (expand) {
-            content.style.display = 'block';
-            arrow.textContent = '▲';
-        } else {
-            content.style.display = 'none';
-            arrow.textContent = '▼';
+                if (expand) {
+                    content.style.display = 'block';
+                    arrow.textContent = '▲';
+                } else {
+                    content.style.display = 'none';
+                    arrow.textContent = '▼';
+                }
+            });
         }
-    });
-}
+
+        function groupLogs() {
+            const container = document.getElementById('logContainer');
+            const entries = Array.from(container.querySelectorAll('.log-entry'));
+
+            entries.forEach(e => {
+                e.style.display = 'block';
+                e.removeAttribute('data-duplicate');
+                const c = e.querySelector('.log-count');
+                if (c) c.textContent = '(x1)';
+            });
+
+            const seen = new Map(); // msg -> { entry, count }
+            for (const entry of entries) {
+                const msg = entry.getAttribute('data-message') || '';
+                if (!seen.has(msg)) {
+                    seen.set(msg, { entry, count: 1 });
+                } else {
+                    const item = seen.get(msg);
+                    item.count++;
+                    entry.setAttribute('data-duplicate', '1');
+                }
+            }
+
+            for (const { entry, count } of seen.values()) {
+                const counter = entry.querySelector('.log-count');
+                if (counter) counter.textContent = `(x${count})`;
+            }
+            entries.forEach(e => {
+                if (e.getAttribute('data-duplicate') === '1') {
+                    e.style.display = 'none';
+                }
+            });
+
+            container.dataset.grouped = 'true';
+        }
+
+        function ungroupLogs() {
+            const container = document.getElementById('logContainer');
+            const entries = container.querySelectorAll('.log-entry');
+
+            entries.forEach(e => {
+                e.style.display = 'block';
+                e.removeAttribute('data-duplicate');
+                const c = e.querySelector('.log-count');
+                if (c) c.textContent = '(x1)';
+            });
+
+            container.dataset.grouped = 'false';
+        }
 
         function filterLogs() {
             const input = document.getElementById('searchBox');

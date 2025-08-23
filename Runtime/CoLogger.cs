@@ -29,8 +29,10 @@ namespace CoradoLog
                 EnableFileWriter(Application.dataPath + _settings.FileWriterPath);
             }
 
-            _htmlWriter = new CoLoggerHtmlFileWriter();
-            _htmlWriter.Init();
+            if (_settings.IsLogToHtml)
+            {
+                EnableHtmlWriter(Application.dataPath + _settings.HtmlFileWriterPath, _settings.IsOnlyCoLoggerLogs);
+            }
             
             Log("CoLogger Initialize", CONTEXT_SYSTEM);
         }
@@ -46,6 +48,19 @@ namespace CoradoLog
                 
             _writer = new CoLoggerFileWriter();
             _writer.Init(logFilePath);
+        }
+        
+        public static void EnableHtmlWriter(string path, bool isOnlyCoLoggerLogs)
+        {
+            if (_writer != null) return;
+            
+            var exeDir = Path.GetDirectoryName(path);
+            var logFilePath = Path.Combine(exeDir,
+                "cologger_html_" + Guid.NewGuid().ToString().Replace("-", "_") + "_" +
+                DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".html");
+                
+            _htmlWriter = new CoLoggerHtmlFileWriter();
+            _htmlWriter.Init(isOnlyCoLoggerLogs, logFilePath);
         }
 
         public static void SetTransmitter(ICoLoggerTransmitter transmitter)
@@ -66,6 +81,16 @@ namespace CoradoLog
                 sender = _senders;
 
             Log(message, sender, context, string.Empty, importance);
+        }
+        
+        public static void LogError(string message, string context, Exception ex, EDebugImportance importance = EDebugImportance.All)
+        {
+            var sender = SENDER_SYSTEM;
+            
+            if (!string.IsNullOrEmpty(_senders))
+                sender = _senders;
+
+            Log(message, sender, context, string.Empty, importance, ex);
         }
         
         public static void Log(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All)
@@ -105,14 +130,17 @@ namespace CoradoLog
 
             if (ex == null)
             {
-                correctLogString = string.Format("{3} [{1}] [{2}] {4}: {0}", formatMessage, sender, formatContext, DateTime.Now, formatTag);
+                correctLogString = string.Format("{3} [CL][{1}] [{2}] {4}: {0}", formatMessage, sender, formatContext, DateTime.Now, formatTag);
             }
             else
             {
-                correctLogString = string.Format("{3} [{1}] [{2}] {5}: {0}\n{4}", formatMessage, sender, formatContext, DateTime.Now, ex, formatTag);
+                correctLogString = string.Format("{3} [CL][{1}] [{2}] {5}: {0}\n{4}", formatMessage, sender, formatContext, DateTime.Now, ex, formatTag);
             }
 
-            Debug.Log(correctLogString);
+            if(ex == null)
+                Debug.Log(correctLogString);
+            else
+                Debug.LogError(correctLogString);
             
             _transmitter?.ResendMe(message, sender, context, importance);
 

@@ -36,8 +36,11 @@ MonoBehaviour:
     IsEnable: 1
     DrawColor: {r: 0.8235294, g: 0.8235294, b: 0.8235294, a: 1}
     IsRuntime: 0
+  IsAddContextInRuntime: 1
   TagColor: {r: 0, g: 1, b: 0, a: 1}
   Tags: []
-  IsAddContextInRuntime: 1
-  IsLogToFile: 1
+  IsLogToFile: 0
   FileWriterPath: 
+  IsLogToHtml: 0
+  HtmlFileWriterPath: 
+  IsOnlyCoLoggerLogs: 0

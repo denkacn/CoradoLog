@@ -8,6 +8,7 @@ namespace CoradoLog
     [Serializable]
     public class CoLoggerSettings : ScriptableObject
     {
+        [Header("Base Settings")]
         public EDebugImportance Importance;
         
         public List<ImportanceSetting> ImportanceSettings = new List<ImportanceSetting>()
@@ -30,13 +31,26 @@ namespace CoradoLog
             new ContextSetting("Debug", new Color32(210, 210, 210, 255))
         };
 
+        public bool IsAddContextInRuntime = true;
+        
+        [Space(10)]
+        
+        [Header("Tags Settings")]
         public Color TagColor = Color.green;
         public List<string> Tags = new List<string>(); 
 
-        public bool IsAddContextInRuntime = true;
-
+        [Space(10)]
+        
+        [Header("Log To File Settings")]
         public bool IsLogToFile = false;
         public string FileWriterPath = "";
+        
+        [Space(10)]
+        
+        [Header("Log To HTML Settings")]
+        public bool IsLogToHtml = false;
+        public string HtmlFileWriterPath = "";
+        public bool IsOnlyCoLoggerLogs = true;
         
         public bool IsSenderExist(string senderName)
         {

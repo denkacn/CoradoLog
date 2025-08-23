@@ -70,6 +70,8 @@ namespace CoradoLog
             align-items: center;
             background-color: #3c3c3c;
         }
+        .arrow {
+        }
         .log-time {
             font-size: 12px;
             opacity: 0.8;
@@ -120,8 +122,8 @@ namespace CoradoLog
         <div class='controls'>
             <input type='text' id='searchBox' class='search-box' placeholder='Search by logs...' onkeyup='filterLogs()'>
             <br>
-            <button class='toggle-btn' onclick='toggleAll(true)'>Expand everything</button>
-            <button class='toggle-btn' onclick='toggleAll(false)'>Turn everything</button>
+            <button class='toggle-btn' onclick='toggleAll(true)'>Expand</button>
+            <button class='toggle-btn' onclick='toggleAll(false)'>Collapse</button>
         </div>
     </div>
     <div id='logContainer'>");
@@ -141,7 +143,7 @@ namespace CoradoLog
                     <span class='log-type type-{type.ToString().ToLower()}'>{type.ToString()}</span>
                     <span class='log-message'>{formattedMessage}</span>
                 </div>
-                <span>▼</span>
+                <span class='arrow'>▼</span>
             </div>
             <div class='log-content'>
                 <div class='stack-trace'>{stackTrace}</div>
@@ -173,19 +175,22 @@ namespace CoradoLog
         }
 
         function toggleAll(expand) {
-            const entries = document.querySelectorAll('.log-entry');
-            entries.forEach(entry => {
-                const content = entry.querySelector('.log-content');
-                const arrow = entry.querySelector('.log-header span:last-child');
-                if (expand) {
-                    content.style.display = 'block';
-                    arrow.textContent = '▲';
-                } else {
-                    content.style.display = 'none';
-                    arrow.textContent = '▼';
-                }
-            });
+    const entries = document.querySelectorAll('.log-entry');
+    entries.forEach(entry => {
+        const content = entry.querySelector('.log-content');
+        const header = entry.querySelector('.log-header');
+        //const arrow = header.querySelector('span:last-child');
+        const arrow = entry.querySelector('.arrow');
+
+        if (expand) {
+            content.style.display = 'block';
+            arrow.textContent = '▲';
+        } else {
+            content.style.display = 'none';
+            arrow.textContent = '▼';
         }
+    });
+}
 
         function filterLogs() {
             const input = document.getElementById('searchBox');

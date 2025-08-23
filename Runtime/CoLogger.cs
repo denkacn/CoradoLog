@@ -16,6 +16,7 @@ namespace CoradoLog
         private static string _senders;
         private static ICoLoggerTransmitter _transmitter;
         private static CoLoggerFileWriter _writer;
+        private static CoLoggerHtmlFileWriter _htmlWriter;
         
         public static void Init(CoLoggerSettings settings)
         {
@@ -27,6 +28,9 @@ namespace CoradoLog
             {
                 EnableFileWriter(Application.dataPath + _settings.FileWriterPath);
             }
+
+            _htmlWriter = new CoLoggerHtmlFileWriter();
+            _htmlWriter.Init();
             
             Log("CoLogger Initialize", CONTEXT_SYSTEM);
         }
@@ -165,6 +169,7 @@ namespace CoradoLog
             Log("CoLogger Discard", CONTEXT_SYSTEM);
             
             _writer?.Discard();
+            _htmlWriter?.Discard();
         }
     }
 

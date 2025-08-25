@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Web;
 using UnityEngine;
 
 namespace CoradoLog
@@ -148,9 +148,9 @@ namespace CoradoLog
 
             _logCount++;
             
-            var timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var formattedMessage = FormatColoredMessage(logString);
-            var formattedStackTrace = HttpUtility.HtmlEncode(stackTrace);
+            var formattedStackTrace = WebUtility.HtmlEncode(stackTrace);
             
             var logEntry = $@"
         <div class='log-entry' id='entry_{timestamp.Replace(":", "-")}' data-message='{EscapeHtml(logString) + type}'>

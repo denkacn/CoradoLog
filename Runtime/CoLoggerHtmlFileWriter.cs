@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -23,6 +24,8 @@ namespace CoradoLog
         public void Discard()
         {
             Application.logMessageReceived -= HandleLog;
+
+            UpdateLogFile();
         }
 
         private void InitializeHtmlFile()
@@ -136,9 +139,13 @@ namespace CoradoLog
             File.WriteAllText(_logFilePath, _htmlContent.ToString());
         }
 
+        private int _logCount;
+        
         private void HandleLog(string logString, string stackTrace, LogType type)
         {
             if (_isOnlyCoLoggerLogs && !logString.Contains("[CL]")) return;
+
+            _logCount++;
             
             var timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var formattedMessage = FormatColoredMessage(logString);
@@ -160,13 +167,17 @@ namespace CoradoLog
 
             _htmlContent.Append(logEntry);
 
-            UpdateLogFile();
+            if (_logCount >= 50)
+            {
+                _logCount = 0;
+                UpdateLogFile();
+            }
         }
 
         private void UpdateLogFile()
         {
             var content = _htmlContent.ToString();
-            var endIndex = content.LastIndexOf("</div>") - 10; // Позиция перед закрывающим тегом
+            var endIndex = content.LastIndexOf("</div>", StringComparison.Ordinal) - 10; // Позиция перед закрывающим тегом
             var finalContent = content.Substring(0, endIndex) + @"
     </div>
     <script>
@@ -300,6 +311,7 @@ namespace CoradoLog
         private string EscapeHtml(string input)
         {
             if (string.IsNullOrEmpty(input)) return "";
+            
             return input.Replace("&", "&amp;")
                 .Replace("<", "&lt;")
                 .Replace(">", "&gt;")

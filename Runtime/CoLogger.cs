@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace CoradoLog
@@ -52,7 +53,7 @@ namespace CoradoLog
         
         public static void EnableHtmlWriter(string path, bool isOnlyCoLoggerLogs)
         {
-            if (_writer != null) return;
+            if (_htmlWriter != null) return;
             
             var exeDir = Path.GetDirectoryName(path);
             var logFilePath = Path.Combine(exeDir,
@@ -196,6 +197,8 @@ namespace CoradoLog
 
         private static string GetMessageFormat(string message, EDebugImportance importance)
         {
+            var messageSanitized = SanitizeMessage(message);
+            
             var importanceSetting = _settings.ImportanceSettings.FirstOrDefault(i => i.Importance == importance);
             var color = Color.white;
             
@@ -205,7 +208,12 @@ namespace CoradoLog
             }
 
             return string.Format("<color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte) (color.r*255f), (byte) (color.g*255f),
-                (byte) (color.b*255f), message);
+                (byte) (color.b*255f), messageSanitized);
+        }
+        
+        public static string SanitizeMessage(string input)
+        {
+            return Regex.Replace(input, @"[^a-zA-Zа-яА-Я0-9\s\.,!?;:()\-]", "");
         }
 
         public static void Discard()

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using UnityEngine;
 
 namespace CoradoLog
@@ -149,7 +150,7 @@ namespace CoradoLog
             
             var timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var formattedMessage = FormatColoredMessage(logString);
-            var formattedStackTrace = System.Web.HttpUtility.HtmlEncode(stackTrace);
+            var formattedStackTrace = HttpUtility.HtmlEncode(stackTrace);
             
             var logEntry = $@"
         <div class='log-entry' id='entry_{timestamp.Replace(":", "-")}' data-message='{EscapeHtml(logString) + type}'>

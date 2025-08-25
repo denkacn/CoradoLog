@@ -149,6 +149,7 @@ namespace CoradoLog
             
             var timestamp = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
             var formattedMessage = FormatColoredMessage(logString);
+            var formattedStackTrace = System.Web.HttpUtility.HtmlEncode(stackTrace);
             
             var logEntry = $@"
         <div class='log-entry' id='entry_{timestamp.Replace(":", "-")}' data-message='{EscapeHtml(logString) + type}'>
@@ -161,7 +162,7 @@ namespace CoradoLog
                 <span class='arrow'>▼</span>
             </div>
             <div class='log-content'>
-                <div class='stack-trace'>{stackTrace}</div>
+                <div class='stack-trace'>{formattedStackTrace}</div>
             </div>
         </div>";
 

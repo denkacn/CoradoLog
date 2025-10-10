@@ -41,19 +41,21 @@ namespace CoradoLog
             Log("CoLogger Initialize", CONTEXT_SYSTEM);
         }
 
-        public static void EnableFileWriter(string path)
+        public static void EnableFileWriter(string path, string prefix = "")
         {
             if (_writer != null) return;
 
             try
             {
                 var exeDir = Path.GetDirectoryName(path);
-                var logFilePath = Path.Combine(exeDir,
-                    "cologger_" + Guid.NewGuid().ToString().Replace("-", "_") + "_" +
-                    DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".txt");
+                if (exeDir != null)
+                {
+                    var logFilePath = Path.Combine(exeDir,
+                        $"cologger_{prefix}_{Guid.NewGuid().ToString().Replace("-", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
 
-                _writer = new CoLoggerFileWriter();
-                _writer.Init(logFilePath);
+                    _writer = new CoLoggerFileWriter();
+                    _writer.Init(logFilePath);
+                }
             }
             catch (Exception ex)
             {
@@ -61,7 +63,7 @@ namespace CoradoLog
             }
         }
 
-        public static void EnableHtmlWriter(string path, bool isOnlyCoLoggerLogs)
+        public static void EnableHtmlWriter(string path, bool isOnlyCoLoggerLogs, string suffix = "")   
         {
             if (_htmlWriter != null) return;
 
@@ -69,8 +71,7 @@ namespace CoradoLog
             {
                 var exeDir = Path.GetDirectoryName(path);
                 var logFilePath = Path.Combine(exeDir,
-                    "cologger_html_" + Guid.NewGuid().ToString().Replace("-", "_") + "_" +
-                    DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".html");
+                    $"cologger_html_{suffix}_{Guid.NewGuid().ToString().Replace("-", "_")}_{DateTime.Now:yyyyMMdd_HHmmss}.html");
 
                 _htmlWriter = new CoLoggerHtmlFileWriter();
                 _htmlWriter.Init(isOnlyCoLoggerLogs, logFilePath);

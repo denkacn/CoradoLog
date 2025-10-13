@@ -44,6 +44,7 @@ namespace CoradoLog
         [Header("Log To File Settings")]
         public bool IsLogToFile = false;
         public string FileWriterPath = "";
+        public bool SkipConditionsForFileWriter = true;
         
         [Space(10)]
         

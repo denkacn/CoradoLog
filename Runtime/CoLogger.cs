@@ -123,9 +123,15 @@ namespace CoradoLog
         public static void Log(string message, string sender, string context, string tag,
             EDebugImportance importance = EDebugImportance.All, Exception ex = null)
         {
-            if (!_settings.IsSenderExist(sender)) return;
+            if (!_settings.IsSenderExist(sender))
+            {
+                return;
+            }
 
-            if ((int)importance < (int)_settings.Importance) return;
+            if ((int)importance < (int)_settings.Importance)
+            {
+                return;
+            }
 
             if (!_settings.IsContextExist(context))
             {
@@ -155,18 +161,22 @@ namespace CoradoLog
                 }
                 else
                 {
-                    correctLogString =
-                        $"{DateTime.Now} [CL][{sender}] [{formatContext}] {formatTag}: {formatMessage}\n{ex}";
+                    correctLogString = $"{DateTime.Now} [CL][{sender}] [{formatContext}] {formatTag}: {formatMessage}\n{ex}";
                 }
 
-                if (ex == null)
-                    Debug.Log(correctLogString);
-                else
-                    Debug.LogError(correctLogString);
+                var isConditionValid = _settings.IsSenderExist(sender) && (int)importance >= (int)_settings.Importance && IsContextValid(context);
+
+                if (isConditionValid)
+                {
+                    if (ex == null)
+                        Debug.Log(correctLogString);
+                    else
+                        Debug.LogError(correctLogString);
+                }
 
                 _transmitter?.ResendMe(message, sender, context, importance);
 
-                _writer?.Write(correctLogString);
+                if (_settings.SkipConditionsForFileWriter || isConditionValid) _writer?.Write(correctLogString);
 
             }
             catch (Exception logEx)
@@ -178,6 +188,22 @@ namespace CoradoLog
         public static void AddContext(string context)
         { 
             _settings.AddContext(context);
+        }
+        
+        private static bool IsContextValid(string context)
+        {
+            if (_settings.IsContextExist(context)) return true;
+
+            if (!_settings.IsAddContextInRuntime) return false;
+            
+            AddContext(context);
+            return true;
+
+        }
+        
+        private static void DoAfterOperation(string correctLogString)
+        {
+            _writer?.Write(correctLogString);
         }
         
         private static object GetTagFormat(string tag)

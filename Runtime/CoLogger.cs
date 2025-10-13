@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using CoradoLog.Interfaces;
 using UnityEngine;
 
 namespace CoradoLog
@@ -17,6 +18,7 @@ namespace CoradoLog
         private static ICoLoggerTransmitter _transmitter;
         private static CoLoggerFileWriter _writer;
         private static CoLoggerHtmlFileWriter _htmlWriter;
+        private static ICoLoggerCustomDataProvider _customDataProvider;
         
         public static void Init(CoLoggerSettings settings)
         {
@@ -92,59 +94,41 @@ namespace CoradoLog
             _senders = senders;
         }
 
-        public static void Log(string message, EDebugImportance importance = EDebugImportance.All)
+        public static void SetCustomDataProvider(ICoLoggerCustomDataProvider customDataProvider)
+        {
+            _customDataProvider = customDataProvider;
+        }
+        
+        public static void Log(string message, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance);
         }
         
-        public static void LogError(string message, Exception ex, EDebugImportance importance = EDebugImportance.All)
+        public static void LogError(string message, Exception ex, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, ex);
         }
 
-        public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All)
+        public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
             Log(message, sender, context, string.Empty, importance);
         }
         
-        public static void LogError(string message, string context, Exception ex, EDebugImportance importance = EDebugImportance.All)
+        public static void LogError(string message, string context, Exception ex, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
             Log(message, sender, context, string.Empty, importance, ex);
         }
         
-        public static void Log(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All)
+        public static void Log(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
             Log(message, sender, context, tag, importance);
         }
 
-        public static void Log(string message, string sender, string context, string tag,
-            EDebugImportance importance = EDebugImportance.All, Exception ex = null)
+        public static void Log(string message, string sender, string context, string tag, EDebugImportance importance = EDebugImportance.All, Exception ex = null, object customData = null)
         {
-            if (!_settings.IsSenderExist(sender))
-            {
-                return;
-            }
-
-            if ((int)importance < (int)_settings.Importance)
-            {
-                return;
-            }
-
-            if (!_settings.IsContextExist(context))
-            {
-                if (_settings.IsAddContextInRuntime)
-                {
-                    AddContext(context);
-                }
-                else
-                {
-                    return;
-                }
-            }
-
             if (!string.IsNullOrEmpty(tag) && !_settings.IsTagExist(tag)) return;
 
             try
@@ -152,6 +136,9 @@ namespace CoradoLog
                 var formatMessage = GetMessageFormat(message, importance);
                 var formatContext = GetContextFormat(context);
                 var formatTag = GetTagFormat(tag);
+                var formatCustomData = customData != null && _customDataProvider != null
+                    ? _customDataProvider.GetCustomDataFormat(customData)
+                    : string.Empty;
 
                 string correctLogString;
 
@@ -163,6 +150,9 @@ namespace CoradoLog
                 {
                     correctLogString = $"{DateTime.Now} [CL][{sender}] [{formatContext}] {formatTag}: {formatMessage}\n{ex}";
                 }
+
+                if (formatCustomData != string.Empty)
+                    correctLogString += $"\nCustomData: ({formatCustomData})";
 
                 var isConditionValid = _settings.IsSenderExist(sender) && (int)importance >= (int)_settings.Importance && IsContextValid(context);
 
@@ -201,12 +191,7 @@ namespace CoradoLog
 
         }
         
-        private static void DoAfterOperation(string correctLogString)
-        {
-            _writer?.Write(correctLogString);
-        }
-        
-        private static object GetTagFormat(string tag)
+        private static string GetTagFormat(string tag)
         {
             if (string.IsNullOrEmpty(tag)) return string.Empty;
 
@@ -264,6 +249,9 @@ namespace CoradoLog
             {
                 _writer?.Discard();
                 _htmlWriter?.Discard();
+                
+                _writer = null;
+                _htmlWriter = null;
             }
             catch (Exception ex)
             {

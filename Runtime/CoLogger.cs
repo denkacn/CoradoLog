@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using CoradoLog.Interfaces;
 using UnityEngine;
 
@@ -238,8 +237,6 @@ namespace CoradoLog
 
         private static string GetMessageFormat(string message, EDebugImportance importance)
         {
-            var messageSanitized = SanitizeMessage(message);
-            
             var importanceSetting = _settings.ImportanceSettings.FirstOrDefault(i => i.Importance == importance);
             var color = Color.white;
             
@@ -250,12 +247,12 @@ namespace CoradoLog
             
             var hexColor = ColorUtility.ToHtmlStringRGB(color);
 
-            return $"<color=#{hexColor}>{messageSanitized}</color>";
+            return $"<color=#{hexColor}>{message ?? string.Empty}</color>";
         }
         
         public static string SanitizeMessage(string input)
         {
-            return Regex.Replace(input, @"[^a-zA-Zа-яА-Я0-9\s\.,!?;:()\-]", "");
+            return input ?? string.Empty;
         }
 
         public static void Discard()

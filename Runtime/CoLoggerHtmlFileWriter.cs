@@ -9,32 +9,170 @@ namespace CoradoLog
 {
     public class CoLoggerHtmlFileWriter
     {
-        private StringBuilder _htmlContent;
+        private static readonly Regex ColorTagRegex = new Regex(@"<color=([^>]+)>(.*?)</color>", RegexOptions.Compiled | RegexOptions.Singleline);
+        private static readonly Regex CssColorRegex = new Regex(@"^#?[a-zA-Z0-9]+$", RegexOptions.Compiled);
+
+        private StringBuilder _logEntries;
         private string _logFilePath;
         private bool _isOnlyCoLoggerLogs;
+        private bool _isSubscribed;
+        private bool _isDiscarded;
+        private int _logCountSinceFlush;
+        private int _entryIndex;
         
         public void Init(bool isOnlyCoLoggerLogs, string filePath)
         {
+            if (string.IsNullOrWhiteSpace(filePath))
+                throw new ArgumentException("HTML log file path is empty.", nameof(filePath));
+
             _isOnlyCoLoggerLogs = isOnlyCoLoggerLogs;
             _logFilePath = filePath;
-            
+            _logEntries = new StringBuilder();
+            _isDiscarded = false;
+            _logCountSinceFlush = 0;
+            _entryIndex = 0;
+
+            var directoryPath = Path.GetDirectoryName(_logFilePath);
+            if (!string.IsNullOrEmpty(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+
+            Application.logMessageReceived -= HandleLog;
             Application.logMessageReceived += HandleLog;
-            InitializeHtmlFile();
+            _isSubscribed = true;
+
+            UpdateLogFile();
         }
         
         public void Discard()
         {
-            Application.logMessageReceived -= HandleLog;
+            if (_isDiscarded) return;
+
+            if (_isSubscribed)
+            {
+                Application.logMessageReceived -= HandleLog;
+                _isSubscribed = false;
+            }
 
             UpdateLogFile();
+            _isDiscarded = true;
+        }
+        
+        private void HandleLog(string logString, string stackTrace, LogType type)
+        {
+            if (_isDiscarded) return;
+
+            var safeLogString = logString ?? string.Empty;
+            if (_isOnlyCoLoggerLogs && !safeLogString.Contains("[CL]")) return;
+
+            _entryIndex++;
+            _logCountSinceFlush++;
+            
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            var formattedMessage = FormatColoredMessage(safeLogString);
+            var formattedStackTrace = EscapeHtml(stackTrace);
+            var dataMessage = EscapeHtmlAttribute(safeLogString + type);
+            var entryId = $"entry_{timestamp.Replace(":", "-").Replace(".", "-")}_{_entryIndex}";
+            var logType = type.ToString();
+            var logTypeClass = logType.ToLowerInvariant();
+            
+            var logEntry = $@"
+        <div class='log-entry' id='{entryId}' data-message='{dataMessage}'>
+            <div class='log-header' onclick='toggleLog(this)'>
+                <div>
+                    <span class='log-type type-{logTypeClass}'>{EscapeHtml(logType)}</span>
+                    <span class='log-message'>{formattedMessage}</span>
+                    <span class='log-count' style='color: #999; margin-left: 6px;'>(x1)</span>
+                </div>
+                <span class='arrow'>v</span>
+            </div>
+            <div class='log-content'>
+                <div class='stack-trace'>{formattedStackTrace}</div>
+            </div>
+        </div>";
+
+            _logEntries.Append(logEntry);
+
+            if (_logCountSinceFlush >= 50)
+            {
+                _logCountSinceFlush = 0;
+                UpdateLogFile();
+            }
         }
 
-        private void InitializeHtmlFile()
+        private void UpdateLogFile()
         {
-            //_logFilePath = Path.Combine(Application.dataPath, "debug_log.html");
-            _htmlContent = new StringBuilder();
+            if (string.IsNullOrEmpty(_logFilePath) || _logEntries == null) return;
 
-            _htmlContent.AppendLine(@"<!DOCTYPE html>
+            try
+            {
+                var finalContent = GetHtmlHeader() + _logEntries + GetHtmlFooter();
+                File.WriteAllText(_logFilePath, finalContent, Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to update CoLogger HTML log: {ex.Message}");
+            }
+        }
+        
+        private string FormatColoredMessage(string message)
+        {
+            if (string.IsNullOrEmpty(message)) return string.Empty;
+
+            var result = new StringBuilder();
+            var currentIndex = 0;
+            var matches = ColorTagRegex.Matches(message);
+
+            foreach (Match match in matches)
+            {
+                if (match.Index > currentIndex)
+                {
+                    result.Append(EscapeHtml(message.Substring(currentIndex, match.Index - currentIndex)));
+                }
+
+                var color = match.Groups[1].Value;
+                var content = match.Groups[2].Value;
+                if (IsSafeCssColor(color))
+                {
+                    result.Append($"<span style='color: {EscapeHtmlAttribute(color)};'>");
+                    result.Append(EscapeHtml(content));
+                    result.Append("</span>");
+                }
+                else
+                {
+                    result.Append(EscapeHtml(match.Value));
+                }
+
+                currentIndex = match.Index + match.Length;
+            }
+
+            if (currentIndex < message.Length)
+            {
+                result.Append(EscapeHtml(message.Substring(currentIndex)));
+            }
+
+            return result.ToString();
+        }
+
+        private bool IsSafeCssColor(string color)
+        {
+            return !string.IsNullOrEmpty(color) && CssColorRegex.IsMatch(color);
+        }
+        
+        private string EscapeHtml(string input)
+        {
+            return WebUtility.HtmlEncode(input ?? string.Empty);
+        }
+
+        private string EscapeHtmlAttribute(string input)
+        {
+            return EscapeHtml(input).Replace("'", "&#x27;");
+        }
+
+        private string GetHtmlHeader()
+        {
+            return @"<!DOCTYPE html>
 <html>
 <head>
     <meta charset='UTF-8'>
@@ -76,12 +214,6 @@ namespace CoradoLog
             justify-content: space-between;
             align-items: center;
             background-color: #3c3c3c;
-        }
-        .arrow {
-        }
-        .log-time {
-            font-size: 12px;
-            opacity: 0.8;
         }
         .log-type {
             padding: 3px 8px;
@@ -135,52 +267,12 @@ namespace CoradoLog
             <button class='toggle-btn' onclick='ungroupLogs()'>Ungroup</button>
         </div>
     </div>
-    <div id='logContainer'>");
-
-            File.WriteAllText(_logFilePath, _htmlContent.ToString());
+    <div id='logContainer'>";
         }
 
-        private int _logCount;
-        
-        private void HandleLog(string logString, string stackTrace, LogType type)
+        private string GetHtmlFooter()
         {
-            if (_isOnlyCoLoggerLogs && !logString.Contains("[CL]")) return;
-
-            _logCount++;
-            
-            var timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
-            var formattedMessage = FormatColoredMessage(logString);
-            var formattedStackTrace = WebUtility.HtmlEncode(stackTrace);
-            
-            var logEntry = $@"
-        <div class='log-entry' id='entry_{timestamp.Replace(":", "-")}' data-message='{EscapeHtml(logString) + type}'>
-            <div class='log-header' onclick='toggleLog(this)'>
-                <div>
-                    <span class='log-type type-{type.ToString().ToLower()}'>{type.ToString()}</span>
-                    <span class='log-message'>{formattedMessage}</span>
-                    <span class='log-count' style='color: #999; margin-left: 6px;'>(x1)</span>
-                </div>
-                <span class='arrow'>▼</span>
-            </div>
-            <div class='log-content'>
-                <div class='stack-trace'>{formattedStackTrace}</div>
-            </div>
-        </div>";
-
-            _htmlContent.Append(logEntry);
-
-            if (_logCount >= 50)
-            {
-                _logCount = 0;
-                UpdateLogFile();
-            }
-        }
-
-        private void UpdateLogFile()
-        {
-            var content = _htmlContent.ToString();
-            var endIndex = content.LastIndexOf("</div>", StringComparison.Ordinal) - 10; // Позиция перед закрывающим тегом
-            var finalContent = content.Substring(0, endIndex) + @"
+            return @"
     </div>
     <script>
         function toggleLog(header) {
@@ -188,10 +280,10 @@ namespace CoradoLog
             const arrow = header.lastElementChild;
             if (content.style.display === 'none') {
                 content.style.display = 'block';
-                arrow.textContent = '▲';
+                arrow.textContent = '^';
             } else {
                 content.style.display = 'none';
-                arrow.textContent = '▼';
+                arrow.textContent = 'v';
             }
         }
 
@@ -199,16 +291,14 @@ namespace CoradoLog
             const entries = document.querySelectorAll('.log-entry');
             entries.forEach(entry => {
                 const content = entry.querySelector('.log-content');
-                const header = entry.querySelector('.log-header');
-                //const arrow = header.querySelector('span:last-child');
                 const arrow = entry.querySelector('.arrow');
 
                 if (expand) {
                     content.style.display = 'block';
-                    arrow.textContent = '▲';
+                    arrow.textContent = '^';
                 } else {
                     content.style.display = 'none';
-                    arrow.textContent = '▼';
+                    arrow.textContent = 'v';
                 }
             });
         }
@@ -224,7 +314,7 @@ namespace CoradoLog
                 if (c) c.textContent = '(x1)';
             });
 
-            const seen = new Map(); // msg -> { entry, count }
+            const seen = new Map();
             for (const entry of entries) {
                 const msg = entry.getAttribute('data-message') || '';
                 if (!seen.has(msg)) {
@@ -236,9 +326,9 @@ namespace CoradoLog
                 }
             }
 
-            for (const { entry, count } of seen.values()) {
-                const counter = entry.querySelector('.log-count');
-                if (counter) counter.textContent = `(x${count})`;
+            for (const item of seen.values()) {
+                const counter = item.entry.querySelector('.log-count');
+                if (counter) counter.textContent = '(x' + item.count + ')';
             }
             entries.forEach(e => {
                 if (e.getAttribute('data-duplicate') === '1') {
@@ -280,45 +370,13 @@ namespace CoradoLog
             });
         }
 
-        // Автоскролл к новому логу
         window.addEventListener('load', function() {
             window.scrollTo(0, document.body.scrollHeight);
         });
     </script>
 </body>
 </html>";
-
-            File.WriteAllText(_logFilePath, finalContent);
-        }
-        
-        private string FormatColoredMessage(string message)
-        {
-            if (string.IsNullOrEmpty(message))
-                return "";
-            
-            var formatted = message;
-            
-            formatted = Regex.Replace(formatted, @"$<color=([^>]+)>([^<]+)</color>$", 
-                match => $"<span style='color: {match.Groups[1].Value};'>{match.Groups[2].Value}</span>");
-            
-            formatted = Regex.Replace(formatted, @"<color=([^>]+)>([^<]+)</color>", 
-                match => $"<span style='color: {match.Groups[1].Value};'>{match.Groups[2].Value}</span>");
-            
-            formatted = Regex.Replace(formatted, @"<color=([^>]+)>([^<]+)</color>", 
-                match => $"<span style='color: {match.Groups[1].Value};'>{match.Groups[2].Value}</span>");
-
-            return formatted;
-        }
-        
-        private string EscapeHtml(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return "";
-            
-            return input.Replace("&", "&amp;")
-                .Replace("<", "&lt;")
-                .Replace(">", "&gt;")
-                .Replace("\"", "&quot;")
-                .Replace("'", "&#x27;");
         }
     }
 }
+

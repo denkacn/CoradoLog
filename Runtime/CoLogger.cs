@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CoradoLog.Interfaces;
@@ -18,6 +19,7 @@ namespace CoradoLog
         private static CoLoggerFileWriter _writer;
         private static CoLoggerHtmlFileWriter _htmlWriter;
         private static ICoLoggerCustomDataProvider _customDataProvider;
+        private static readonly List<ContextSetting> _runtimeContextSettings = new List<ContextSetting>();
         private static CoLoggerLifeTimeCycle _lifeTimeCycle;
         private static bool _isInitialized;
         private static bool _isDiscarding;
@@ -192,19 +194,42 @@ namespace CoradoLog
         public static void AddContext(string context)
         {
             if (!IsEnsureInitialized($"Cannot add context '{context}' before CoLogger initialization.", SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, null)) return;
-            
-            _settings.AddContext(context);
+            if (string.IsNullOrEmpty(context)) return;
+            if (FindSettingsContext(context) != null) return;
+            if (FindRuntimeContextSetting(context) != null) return;
+
+            _runtimeContextSettings.Add(new ContextSetting(context, Color.magenta) { IsEnable = true, IsRuntime = true });
         }
         
         private static bool IsContextValid(string context)
         {
-            if (_settings.IsContextExist(context)) return true;
+            var settingsContext = FindSettingsContext(context);
+            if (settingsContext != null) return settingsContext.IsEnable;
+
+            if (FindRuntimeContextSetting(context) != null) return true;
 
             if (!_settings.IsAddContextInRuntime) return false;
             
             AddContext(context);
-            return true;
+            return FindRuntimeContextSetting(context) != null;
+        }
+        
+        private static ContextSetting FindContextSetting(string context)
+        {
+            var settingsContext = FindSettingsContext(context);
+            if (settingsContext != null && settingsContext.IsEnable) return settingsContext;
 
+            return FindRuntimeContextSetting(context);
+        }
+
+        private static ContextSetting FindSettingsContext(string context)
+        {
+            return _settings.ContextSettings.FirstOrDefault(c => c.ContextName == context);
+        }
+
+        private static ContextSetting FindRuntimeContextSetting(string context)
+        {
+            return _runtimeContextSettings.FirstOrDefault(c => c.ContextName == context && c.IsEnable);
         }
         
         private static string GetTagFormat(string tag)
@@ -220,7 +245,7 @@ namespace CoradoLog
 
         private static string GetContextFormat(string context)
         {
-            var contextSetting = _settings.ContextSettings.FirstOrDefault(c => c.ContextName == context);
+            var contextSetting = FindContextSetting(context);
             var color = Color.white;
             var customSymbol = string.Empty;
             
@@ -335,6 +360,7 @@ namespace CoradoLog
                 _senders = null;
                 _transmitter = null;
                 _customDataProvider = null;
+                _runtimeContextSettings.Clear();
                 _isInitialized = false;
                 _isMissingInitializationWarningLogged = false;
 

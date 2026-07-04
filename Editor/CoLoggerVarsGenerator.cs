@@ -1,7 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using UnityEditor;
-using UnityEngine;
 
 namespace CoradoLog.Editor
 {
@@ -26,30 +26,34 @@ namespace CoradoLog
     }    
 }
 ";
-            var senders = new StringBuilder();
-
-            foreach (var sender in senderNames)
-            {
-                senders.AppendFormat("\t\t\tpublic static string {0} = \"{0}\";\n", sender);
-            }
+            var correctCode = sourceBuilder.Replace("{senders}", BuildVarsBlock(senderNames, "Sender"));
+            correctCode = correctCode.Replace("{contexts}", BuildVarsBlock(contextNames, "Context"));
             
-            var contexts = new StringBuilder();
-            
-            foreach (var context in contextNames)
-            {
-                contexts.AppendFormat("\t\t\tpublic static string {0} = \"{0}\";\n", context);
-            }
-
-            var correctCode = sourceBuilder.Replace("{senders}", senders.ToString());
-            correctCode = correctCode.Replace("{contexts}", contexts.ToString());
-            
-            var directoryPath = Application.dataPath + "/" + generatePath + "CoradoLogGenerated/";
+            var directoryPath = CoLoggerTools.GetGeneratedDirectory(generatePath);
             CoLoggerTools.CheckDirectory(directoryPath);
 
-            var path = Application.dataPath + "/" + generatePath + "CoradoLogGenerated/CoLoggerVars.cs";
+            var path = Path.Combine(directoryPath, "CoLoggerVars.cs");
             CoLoggerTools.WriteFile(path, correctCode);
 
             AssetDatabase.Refresh();
+        }
+
+        private string BuildVarsBlock(string[] names, string fallbackName)
+        {
+            var builder = new StringBuilder();
+            var usedIdentifiers = new HashSet<string>();
+            if (names == null) return string.Empty;
+
+            foreach (var name in names)
+            {
+                if (string.IsNullOrWhiteSpace(name)) continue;
+
+                var identifier = CoLoggerTools.GetUniqueIdentifier(name, usedIdentifiers, fallbackName);
+                var value = CoLoggerTools.EscapeStringLiteral(name);
+                builder.AppendFormat("            public static string {0} = \"{1}\";\n", identifier, value);
+            }
+
+            return builder.ToString();
         }
     }
 }

@@ -1,5 +1,5 @@
-﻿using UnityEditor;
-using UnityEngine;
+﻿using System.IO;
+using UnityEditor;
 
 namespace CoradoLog.Editor
 {
@@ -7,12 +7,19 @@ namespace CoradoLog.Editor
     {
         public void GenerateSenderClass(string senderName, string generatePath)
         {
+            if (string.IsNullOrWhiteSpace(senderName)) return;
+
+            var senderIdentifier = CoLoggerTools.GetSafeIdentifier(senderName, "Sender");
+            var senderLiteral = CoLoggerTools.EscapeStringLiteral(senderName);
+            var contextLiteral = CoLoggerTools.EscapeStringLiteral("Debug");
+            var className = "Debug" + senderIdentifier;
+
             var sourceBuilder = @"
 using System;
 
 namespace CoradoLog
 {
-    public static class Debug{senderName}
+    public static class {className}
     {
         private const string Sender = ""{senderName}"";
         private const string Context = ""{contextName}"";
@@ -48,13 +55,14 @@ namespace CoradoLog
         }
     }
 }";
-            var correctCode = sourceBuilder.Replace("{senderName}", senderName);
-            correctCode = correctCode.Replace("{contextName}", "Debug");
+            var correctCode = sourceBuilder.Replace("{className}", className);
+            correctCode = correctCode.Replace("{senderName}", senderLiteral);
+            correctCode = correctCode.Replace("{contextName}", contextLiteral);
 
-            var directoryPath = Application.dataPath + "/" + generatePath + "CoradoLogGenerated/";
+            var directoryPath = CoLoggerTools.GetGeneratedDirectory(generatePath);
             CoLoggerTools.CheckDirectory(directoryPath);
             
-            var path = Application.dataPath + "/" + generatePath + "CoradoLogGenerated/Debug" + senderName + ".cs";
+            var path = Path.Combine(directoryPath, className + ".cs");
             CoLoggerTools.WriteFile(path, correctCode);
 
             AssetDatabase.Refresh();

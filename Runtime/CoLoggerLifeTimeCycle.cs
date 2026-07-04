@@ -11,7 +11,7 @@ namespace CoradoLog
         
         private void OnDestroy()
         {
-            CoLogger.Discard();
+            CoLogger.DiscardFromLifeTimeCycle(this);
         }
     }
 }

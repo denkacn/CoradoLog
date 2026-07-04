@@ -19,16 +19,29 @@ namespace CoradoLog
         private static CoLoggerFileWriter _writer;
         private static CoLoggerHtmlFileWriter _htmlWriter;
         private static ICoLoggerCustomDataProvider _customDataProvider;
+        private static CoLoggerLifeTimeCycle _lifeTimeCycle;
+        private static bool _isInitialized;
+        private static bool _isDiscarding;
+        private static bool _isMissingInitializationWarningLogged;
+
+        public static bool IsInitialized => _isInitialized;
         
         public static void Init(CoLoggerSettings settings)
         {
             if (settings == null)
                 throw new ArgumentNullException(nameof(settings));
+
+            if (_isInitialized)
+            {
+                Debug.LogWarning("CoLogger is already initialized. Call CoLogger.Discard() before initializing it again.");
+                return;
+            }
             
             _settings = settings;
+            _isInitialized = true;
+            _isMissingInitializationWarningLogged = false;
 
-            new GameObject("CoLoggerLifeTimeCycleController")
-                .AddComponent<CoLoggerLifeTimeCycle>();
+            EnsureLifeTimeCycle();
 
             if (_settings.IsLogToFile)
             {
@@ -129,6 +142,8 @@ namespace CoradoLog
 
         public static void Log(string message, string sender, string context, string tag, EDebugImportance importance = EDebugImportance.All, Exception ex = null, object customData = null)
         {
+            if (!IsEnsureInitialized(message, sender, context, tag, ex)) return;
+
             if (!string.IsNullOrEmpty(tag) && !_settings.IsTagExist(tag)) return;
 
             try
@@ -176,7 +191,9 @@ namespace CoradoLog
         }
 
         public static void AddContext(string context)
-        { 
+        {
+            if (!IsEnsureInitialized($"Cannot add context '{context}' before CoLogger initialization.", SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, null)) return;
+            
             _settings.AddContext(context);
         }
         
@@ -243,19 +260,94 @@ namespace CoradoLog
 
         public static void Discard()
         {
-            Log("CoLogger Discard", CONTEXT_SYSTEM);
+            DiscardInternal(true);
+        }
+
+        internal static void DiscardFromLifeTimeCycle(CoLoggerLifeTimeCycle lifeTimeCycle)
+        {
+            if (_lifeTimeCycle == lifeTimeCycle)
+            {
+                _lifeTimeCycle = null;
+            }
+
+            DiscardInternal(false);
+        }
+
+        private static void EnsureLifeTimeCycle()
+        {
+            if (_lifeTimeCycle != null) return;
+
+            var lifeTimeCycleObject = new GameObject("CoLoggerLifeTimeCycleController");
+            _lifeTimeCycle = lifeTimeCycleObject.AddComponent<CoLoggerLifeTimeCycle>();
+        }
+
+        private static bool IsEnsureInitialized(string message, string sender, string context, string tag, Exception ex)
+        {
+            if (_isInitialized && _settings != null) return true;
+
+            if (!_isMissingInitializationWarningLogged)
+            {
+                Debug.LogWarning("CoLogger is not initialized. Use CoLogger.Init(settings) before writing CoLogger logs.");
+                _isMissingInitializationWarningLogged = true;
+            }
+
+            WriteFallbackLog(message, sender, context, tag, ex);
+            return false;
+        }
+
+        private static void WriteFallbackLog(string message, string sender, string context, string tag, Exception ex)
+        {
+            var formatTag = string.IsNullOrEmpty(tag) ? string.Empty : $"({tag})";
+            var correctLogString = $"{DateTime.Now} [CL][{sender}] [{context}] {formatTag}: {message}";
+
+            if (ex != null)
+            {
+                correctLogString += $"\n{ex}";
+                Debug.LogError(correctLogString);
+                return;
+            }
+
+            Debug.Log(correctLogString);
+        }
+
+        private static void DiscardInternal(bool destroyLifeTimeCycle)
+        {
+            if (_isDiscarding) return;
+            
+            _isDiscarding = true;
+            
+            if (_isInitialized && _settings != null)
+            {
+                Log("CoLogger Discard", CONTEXT_SYSTEM);
+            }
 
             try
             {
                 _writer?.Discard();
                 _htmlWriter?.Discard();
-                
-                _writer = null;
-                _htmlWriter = null;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Error during CoLogger discard: {ex.Message}");
+            }
+            finally
+            {
+                _writer = null;
+                _htmlWriter = null;
+                _settings = null;
+                _senders = null;
+                _transmitter = null;
+                _customDataProvider = null;
+                _isInitialized = false;
+                _isMissingInitializationWarningLogged = false;
+
+                if (destroyLifeTimeCycle && _lifeTimeCycle != null)
+                {
+                    UnityEngine.Object.Destroy(_lifeTimeCycle.gameObject);
+                }
+
+                _lifeTimeCycle = null;
+                _isDiscarding = false;
             }
         }
     }
@@ -265,3 +357,4 @@ namespace CoradoLog
         void ResendMe(string message, string sender, string context, EDebugImportance importance);
     }
 }
+

@@ -114,30 +114,30 @@ namespace CoradoLog
         
         public static void Log(string message, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
-            Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance);
+            Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, customData: customData);
         }
         
         public static void LogError(string message, Exception ex, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
-            Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, ex);
+            Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, ex, customData);
         }
 
         public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
-            Log(message, sender, context, string.Empty, importance);
+            Log(message, sender, context, string.Empty, importance, customData: customData);
         }
         
         public static void LogError(string message, string context, Exception ex, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
-            Log(message, sender, context, string.Empty, importance, ex);
+            Log(message, sender, context, string.Empty, importance, ex, customData);
         }
         
         public static void Log(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
-            Log(message, sender, context, tag, importance);
+            Log(message, sender, context, tag, importance, customData: customData);
         }
 
         public static void Log(string message, string sender, string context, string tag, EDebugImportance importance = EDebugImportance.All, Exception ex = null, object customData = null)

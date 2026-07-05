@@ -142,9 +142,14 @@ namespace CoradoLog
             Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, customData: customData);
         }
         
-        public static void LogError(string message, Exception ex, EDebugImportance importance = EDebugImportance.All, object customData = null)
+        public static void LogWarning(string message, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
-            Log(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, ex, customData);
+            LogWarning(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, customData);
+        }
+        
+        public static void LogError(string message, Exception ex = null, EDebugImportance importance = EDebugImportance.All, object customData = null)
+        {
+            LogError(message, SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, importance, ex, customData);
         }
 
         public static void Log(string message, string context, EDebugImportance importance = EDebugImportance.All, object customData = null)
@@ -153,10 +158,16 @@ namespace CoradoLog
             Log(message, sender, context, string.Empty, importance, customData: customData);
         }
         
-        public static void LogError(string message, string context, Exception ex, EDebugImportance importance = EDebugImportance.All, object customData = null)
+        public static void LogWarning(string message, string context, EDebugImportance importance = EDebugImportance.All, object customData = null)
         {
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
-            Log(message, sender, context, string.Empty, importance, ex, customData);
+            LogWarning(message, sender, context, string.Empty, importance, customData);
+        }
+        
+        public static void LogError(string message, string context, Exception ex = null, EDebugImportance importance = EDebugImportance.All, object customData = null)
+        {
+            var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
+            LogError(message, sender, context, string.Empty, importance, ex, customData);
         }
         
         public static void Log(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All, object customData = null)
@@ -164,8 +175,29 @@ namespace CoradoLog
             var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
             Log(message, sender, context, tag, importance, customData: customData);
         }
+        
+        public static void LogWarning(string message, string context, string tag, EDebugImportance importance = EDebugImportance.All, object customData = null)
+        {
+            var sender = string.IsNullOrEmpty(_senders) ? SENDER_SYSTEM : _senders;
+            LogWarning(message, sender, context, tag, importance, customData);
+        }
 
         public static void Log(string message, string sender, string context, string tag, EDebugImportance importance = EDebugImportance.All, Exception ex = null, object customData = null)
+        {
+            LogInternal(ex == null ? CoLoggerEntryLevel.Information : CoLoggerEntryLevel.Error, message, sender, context, tag, importance, ex, customData);
+        }
+        
+        public static void LogWarning(string message, string sender, string context, string tag, EDebugImportance importance = EDebugImportance.All, object customData = null)
+        {
+            LogInternal(CoLoggerEntryLevel.Warning, message, sender, context, tag, importance, null, customData);
+        }
+        
+        public static void LogError(string message, string sender, string context, string tag, EDebugImportance importance = EDebugImportance.All, Exception ex = null, object customData = null)
+        {
+            LogInternal(CoLoggerEntryLevel.Error, message, sender, context, tag, importance, ex, customData);
+        }
+
+        private static void LogInternal(CoLoggerEntryLevel level, string message, string sender, string context, string tag, EDebugImportance importance, Exception ex, object customData)
         {
             if (!IsEnsureInitialized(message, sender, context, tag, ex)) return;
 
@@ -173,7 +205,7 @@ namespace CoradoLog
 
             try
             {
-                var entry = CreateEntry(message, sender, context, tag, importance, ex, customData);
+                var entry = CreateEntry(level, message, sender, context, tag, importance, ex, customData);
                 var formatMessage = GetMessageFormat(entry.Message, importance);
                 var formatContext = GetContextFormat(context);
                 var formatTag = GetTagFormat(tag);
@@ -199,11 +231,7 @@ namespace CoradoLog
 
                 if (isConditionValid)
                 {
-                    if (ex == null)
-                        Debug.Log(correctLogString);
-                    else
-                        Debug.LogError(correctLogString);
-
+                    WriteUnityLog(level, correctLogString);
                     NotifyLogReceived(entry);
                 }
 
@@ -307,6 +335,23 @@ namespace CoradoLog
             return input ?? string.Empty;
         }
 
+
+        private static void WriteUnityLog(CoLoggerEntryLevel level, string correctLogString)
+        {
+            switch (level)
+            {
+                case CoLoggerEntryLevel.Warning:
+                    Debug.LogWarning(correctLogString);
+                    break;
+                case CoLoggerEntryLevel.Error:
+                case CoLoggerEntryLevel.Critical:
+                    Debug.LogError(correctLogString);
+                    break;
+                default:
+                    Debug.Log(correctLogString);
+                    break;
+            }
+        }
         private static void NotifyLogReceived(CoLoggerEntry entry)
         {
             var handler = LogReceived;
@@ -323,6 +368,7 @@ namespace CoradoLog
         }
 
         private static CoLoggerEntry CreateEntry(
+            CoLoggerEntryLevel level,
             string message,
             string sender,
             string context,
@@ -334,7 +380,7 @@ namespace CoradoLog
             return new CoLoggerEntry(
                 DateTime.Now,
                 ++_logSequence,
-                ex == null ? CoLoggerEntryLevel.Information : CoLoggerEntryLevel.Error,
+                level,
                 message,
                 sender,
                 context,
@@ -515,6 +561,7 @@ namespace CoradoLog
         void ResendMe(string message, string sender, string context, EDebugImportance importance);
     }
 }
+
 
 
 

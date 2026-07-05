@@ -44,14 +44,24 @@ namespace CoradoLog
             CoLogger.Log(message, Sender, Context, tag, importance, ex);
         }
         
+        public static void LogWarning(string message)
+        {
+            CoLogger.LogWarning(message, Sender, Context, string.Empty, EDebugImportance.All);
+        }
+        
+        public static void LogTagWarning(string message, string tag = """")
+        {
+            CoLogger.LogWarning(message, Sender, Context, tag, EDebugImportance.All);
+        }
+        
         public static void LogError(string message, Exception ex = null)
         {
-            CoLogger.Log(message, Sender, Context, string.Empty, EDebugImportance.All, ex);
+            CoLogger.LogError(message, Sender, Context, string.Empty, EDebugImportance.All, ex);
         }
         
         public static void LogTagError(string message, string tag = """", Exception ex = null)
         {
-            CoLogger.Log(message, Sender, Context, tag, EDebugImportance.All, ex);
+            CoLogger.LogError(message, Sender, Context, tag, EDebugImportance.All, ex);
         }
     }
 }";
@@ -69,3 +79,6 @@ namespace CoradoLog
         }
     }
 }
+
+
+

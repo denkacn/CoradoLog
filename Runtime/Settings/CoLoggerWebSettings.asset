@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f173c27007764630bda81dd4f7f43d56, type: 3}
   m_Name: CoLoggerWebSettings
   m_EditorClassIdentifier: CoradoLogSystem::CoradoLog.Web.CoLoggerWebSettings
-  BaseUrl: http://localhost:5123/
-  ApiToken: cw_jWTz1tiw1tU8YYLr3PkwWSApRRs2WaG8dfwP3lYjZPM
+  BaseUrl: https://coradoweb.bypuziki.com/
+  ApiToken: cw_E6RCw-1xb-Xi_0aAf2qwpk274esZ_is4fU1g-FFm-7s
   Source: Unity
   AppVersion: 1.0.0
   BuildNumber: 1
   ExternalUserId: 
   UseDeviceUniqueIdentifier: 1
-  BatchSize: 50
-  FlushIntervalSeconds: 5
+  BatchSize: 1
+  FlushIntervalSeconds: 1
   MaxQueueSize: 1000
   FlushOnApplicationQuit: 1

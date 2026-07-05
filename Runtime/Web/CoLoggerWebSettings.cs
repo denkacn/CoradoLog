@@ -1,0 +1,30 @@
+﻿using System;
+using UnityEngine;
+
+namespace CoradoLog.Web
+{
+    [CreateAssetMenu(fileName = "CoLoggerWebSettings", menuName = "CoLogger/Web Settings", order = 2)]
+    [Serializable]
+    public sealed class CoLoggerWebSettings : ScriptableObject
+    {
+        [Header("Connection")]
+        public bool IsEnabled = true;
+        public string BaseUrl = "https://logs.bypuziki.com";
+        public string ApiToken = string.Empty;
+
+        [Header("Client")]
+        public string Source = "Unity";
+        public string AppVersion = string.Empty;
+        public string BuildNumber = string.Empty;
+        public string ExternalUserId = string.Empty;
+        public bool UseDeviceUniqueIdentifier = false;
+
+        [Header("Batching")]
+        public int BatchSize = 50;
+        public float FlushIntervalSeconds = 5f;
+        public int MaxQueueSize = 1000;
+        public bool FlushOnApplicationQuit = true;
+
+        public bool IsReady => IsEnabled && !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(ApiToken);
+    }
+}

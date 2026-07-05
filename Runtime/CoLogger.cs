@@ -24,8 +24,10 @@ namespace CoradoLog
         private static bool _isInitialized;
         private static bool _isDiscarding;
         private static bool _isMissingInitializationWarningLogged;
+        private static long _logSequence;
 
         public static bool IsInitialized => _isInitialized;
+        public static event Action<CoLoggerEntry> LogReceived;
         
         public static void Init(CoLoggerSettings settings)
         {
@@ -149,7 +151,8 @@ namespace CoradoLog
 
             try
             {
-                var formatMessage = GetMessageFormat(message, importance);
+                var entry = CreateEntry(message, sender, context, tag, importance, ex, customData);
+                var formatMessage = GetMessageFormat(entry.Message, importance);
                 var formatContext = GetContextFormat(context);
                 var formatTag = GetTagFormat(tag);
                 var formatCustomData = customData != null && _customDataProvider != null
@@ -160,11 +163,11 @@ namespace CoradoLog
 
                 if (ex == null)
                 {
-                    correctLogString = $"{DateTime.Now} [CL][{sender}] [{formatContext}] {formatTag}: {formatMessage}";
+                    correctLogString = $"{entry.Timestamp} [CL][{entry.Sender}] [{formatContext}] {formatTag}: {formatMessage}";
                 }
                 else
                 {
-                    correctLogString = $"{DateTime.Now} [CL][{sender}] [{formatContext}] {formatTag}: {formatMessage}\n{ex}";
+                    correctLogString = $"{entry.Timestamp} [CL][{entry.Sender}] [{formatContext}] {formatTag}: {formatMessage}\n{entry.Exception}";
                 }
 
                 if (formatCustomData != string.Empty)
@@ -178,6 +181,8 @@ namespace CoradoLog
                         Debug.Log(correctLogString);
                     else
                         Debug.LogError(correctLogString);
+
+                    NotifyLogReceived(entry);
                 }
 
                 _transmitter?.ResendMe(message, sender, context, importance);
@@ -280,6 +285,43 @@ namespace CoradoLog
             return input ?? string.Empty;
         }
 
+        private static void NotifyLogReceived(CoLoggerEntry entry)
+        {
+            var handler = LogReceived;
+            if (handler == null) return;
+
+            try
+            {
+                handler.Invoke(entry);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error during CoLogger LogReceived event: {ex.Message}");
+            }
+        }
+
+        private static CoLoggerEntry CreateEntry(
+            string message,
+            string sender,
+            string context,
+            string tag,
+            EDebugImportance importance,
+            Exception ex,
+            object customData)
+        {
+            return new CoLoggerEntry(
+                DateTime.Now,
+                ++_logSequence,
+                ex == null ? CoLoggerEntryLevel.Information : CoLoggerEntryLevel.Error,
+                message,
+                sender,
+                context,
+                tag,
+                importance,
+                ex,
+                customData);
+        }
+
         public static void Discard()
         {
             DiscardInternal(true);
@@ -360,7 +402,9 @@ namespace CoradoLog
                 _senders = null;
                 _transmitter = null;
                 _customDataProvider = null;
+                LogReceived = null;
                 _runtimeContextSettings.Clear();
+                _logSequence = 0;
                 _isInitialized = false;
                 _isMissingInitializationWarningLogged = false;
 
@@ -380,4 +424,6 @@ namespace CoradoLog
         void ResendMe(string message, string sender, string context, EDebugImportance importance);
     }
 }
+
+
 

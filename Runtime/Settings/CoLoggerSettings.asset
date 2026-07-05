@@ -27,6 +27,8 @@ MonoBehaviour:
     IsEnable: 1
   - SenderName: Debug
     IsEnable: 1
+  - SenderName: Denis
+    IsEnable: 1
   ContextSettings:
   - ContextName: System
     IsEnable: 1
@@ -36,11 +38,16 @@ MonoBehaviour:
     IsEnable: 1
     DrawColor: {r: 0.8235294, g: 0.8235294, b: 0.8235294, a: 1}
     IsRuntime: 0
+  - ContextName: UI
+    IsEnable: 1
+    DrawColor: {r: 1, g: 0.76740515, b: 0.24213827, a: 1}
+    IsRuntime: 0
   IsAddContextInRuntime: 1
   TagColor: {r: 0, g: 1, b: 0, a: 1}
   Tags: []
   IsLogToFile: 0
   FileWriterPath: 
+  SkipConditionsForFileWriter: 1
   IsLogToHtml: 0
   HtmlFileWriterPath: 
   IsOnlyCoLoggerLogs: 0

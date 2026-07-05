@@ -16,6 +16,7 @@ namespace CoradoLog.Web
         private Coroutine _flushCoroutine;
         private bool _isSubscribed;
         private bool _isSending;
+        private long _externalLogSequence;
         private long _unityLogSequence;
         private string _sessionId;
 
@@ -59,6 +60,7 @@ namespace CoradoLog.Web
             _settings = null;
             _coroutineRunner = null;
             _isSending = false;
+            _externalLogSequence = 0;
             _unityLogSequence = 0;
             _sessionId = null;
         }
@@ -66,6 +68,50 @@ namespace CoradoLog.Web
         public void Dispose()
         {
             Discard();
+        }
+
+        public void QueueLog(
+            string message,
+            CoLoggerEntryLevel level = CoLoggerEntryLevel.Information,
+            string sender = null,
+            string context = null,
+            string tag = null,
+            EDebugImportance importance = EDebugImportance.All,
+            Exception exception = null,
+            object customData = null,
+            string stackTrace = null)
+        {
+            if (_settings == null || !_settings.IsReady) return;
+
+            var entry = new CoLoggerEntry(
+                DateTime.Now,
+                ++_externalLogSequence,
+                level,
+                message,
+                GetValueOrDefault(sender, "External"),
+                GetValueOrDefault(context, "External"),
+                tag,
+                importance,
+                exception,
+                customData,
+                stackTrace);
+
+            EnqueueEntry(entry);
+        }
+
+        public void QueueWarning(string message, string sender = null, string context = null, string tag = null, object customData = null, string stackTrace = null)
+        {
+            QueueLog(message, CoLoggerEntryLevel.Warning, sender, context, tag, EDebugImportance.Medium, null, customData, stackTrace);
+        }
+
+        public void QueueError(string message, string sender = null, string context = null, string tag = null, Exception exception = null, object customData = null, string stackTrace = null)
+        {
+            QueueLog(message, CoLoggerEntryLevel.Error, sender, context, tag, EDebugImportance.Critical, exception, customData, stackTrace);
+        }
+
+        public void QueueCritical(string message, string sender = null, string context = null, string tag = null, Exception exception = null, object customData = null, string stackTrace = null)
+        {
+            QueueLog(message, CoLoggerEntryLevel.Critical, sender, context, tag, EDebugImportance.Critical, exception, customData, stackTrace);
         }
 
         public List<CoLoggerEntry> DequeueBatch(int maxCount)
@@ -419,6 +465,11 @@ namespace CoradoLog.Web
         }
     }
 }
+
+
+
+
+
 
 
 

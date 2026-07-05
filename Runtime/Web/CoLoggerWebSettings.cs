@@ -11,6 +11,10 @@ namespace CoradoLog.Web
         public string BaseUrl = "https://logs.bypuziki.com";
         public string ApiToken = string.Empty;
 
+        [Header("Sources")]
+        public bool SendCoLoggerLogs = true;
+        public bool SendUnityLogs = true;
+
         [Header("Client")]
         public string Source = "Unity";
         public string AppVersion = string.Empty;
@@ -27,5 +31,3 @@ namespace CoradoLog.Web
         public bool IsReady => !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(ApiToken);
     }
 }
-
-

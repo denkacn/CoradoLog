@@ -16,6 +16,7 @@ namespace CoradoLog.Web
         private Coroutine _flushCoroutine;
         private bool _isSubscribed;
         private bool _isSending;
+        private long _unityLogSequence;
         private string _sessionId;
 
         public bool IsInitialized => _settings != null;
@@ -58,6 +59,7 @@ namespace CoradoLog.Web
             _settings = null;
             _coroutineRunner = null;
             _isSending = false;
+            _unityLogSequence = 0;
             _sessionId = null;
         }
 
@@ -91,7 +93,18 @@ namespace CoradoLog.Web
             if (_isSubscribed) return;
 
             CoLogger.LogReceived -= HandleLogReceived;
-            CoLogger.LogReceived += HandleLogReceived;
+            Application.logMessageReceived -= HandleUnityLogReceived;
+
+            if (_settings.SendCoLoggerLogs)
+            {
+                CoLogger.LogReceived += HandleLogReceived;
+            }
+
+            if (_settings.SendUnityLogs)
+            {
+                Application.logMessageReceived += HandleUnityLogReceived;
+            }
+
             _isSubscribed = true;
         }
 
@@ -100,12 +113,43 @@ namespace CoradoLog.Web
             if (!_isSubscribed) return;
 
             CoLogger.LogReceived -= HandleLogReceived;
+            Application.logMessageReceived -= HandleUnityLogReceived;
             _isSubscribed = false;
         }
 
         private void HandleLogReceived(CoLoggerEntry entry)
         {
-            if (_settings == null || !_settings.IsReady || entry == null) return;
+            if (_settings == null || !_settings.IsReady || !_settings.SendCoLoggerLogs || entry == null) return;
+
+            EnqueueEntry(entry);
+        }
+
+        private void HandleUnityLogReceived(string condition, string stackTrace, LogType type)
+        {
+            if (_settings == null || !_settings.IsReady || !_settings.SendUnityLogs) return;
+            if (IsIgnoredUnityLog(condition)) return;
+
+            var level = MapUnityLogType(type);
+            if (level != CoLoggerEntryLevel.Warning && level != CoLoggerEntryLevel.Error && level != CoLoggerEntryLevel.Critical) return;
+
+            var entry = new CoLoggerEntry(
+                DateTime.Now,
+                ++_unityLogSequence,
+                level,
+                condition,
+                "Unity",
+                "Unity",
+                type.ToString(),
+                level == CoLoggerEntryLevel.Warning ? EDebugImportance.Medium : EDebugImportance.Critical,
+                null,
+                null,
+                stackTrace);
+
+            EnqueueEntry(entry);
+        }
+        private void EnqueueEntry(CoLoggerEntry entry)
+        {
+            if (entry == null) return;
 
             while (_queue.Count >= Math.Max(1, _settings.MaxQueueSize))
             {
@@ -114,12 +158,11 @@ namespace CoradoLog.Web
 
             _queue.Enqueue(entry);
 
-            if (IsBatchReady || entry.Level == CoLoggerEntryLevel.Error || entry.Level == CoLoggerEntryLevel.Critical)
+            if (IsBatchReady || entry.Level == CoLoggerEntryLevel.Warning || entry.Level == CoLoggerEntryLevel.Error || entry.Level == CoLoggerEntryLevel.Critical)
             {
                 Flush();
             }
         }
-
         private IEnumerator FlushLoop()
         {
             while (_settings != null)
@@ -138,7 +181,6 @@ namespace CoradoLog.Web
             var requestJson = BuildRequestJson(batch);
             var requestUrl = BuildRequestUrl();
             var body = Encoding.UTF8.GetBytes(requestJson);
-
             var isSendFailed = false;
 
             using (var request = new UnityWebRequest(requestUrl, UnityWebRequest.kHttpVerbPOST))
@@ -211,25 +253,7 @@ namespace CoradoLog.Web
                 customData = entry.CustomData?.ToString()
             };
         }
-        private static string BuildStackTrace(CoLoggerEntry entry)
-        {
-            if (entry == null) return null;
 
-            var exceptionStackTrace = entry.Exception?.StackTrace;
-            var callStack = entry.CallStack;
-
-            if (string.IsNullOrWhiteSpace(exceptionStackTrace))
-            {
-                return string.IsNullOrWhiteSpace(callStack) ? null : callStack;
-            }
-
-            if (string.IsNullOrWhiteSpace(callStack))
-            {
-                return exceptionStackTrace;
-            }
-
-            return $"Exception stack trace:\n{exceptionStackTrace}\n\nCoLogger call stack:\n{callStack}";
-        }
         private int GetBatchSize()
         {
             if (_settings == null) return 1;
@@ -275,6 +299,32 @@ namespace CoradoLog.Web
             }
         }
 
+        private static bool IsIgnoredUnityLog(string condition)
+        {
+            if (string.IsNullOrEmpty(condition)) return false;
+            if (condition.Contains("[CL]")) return true;
+            if (condition.StartsWith("CoLogger", StringComparison.Ordinal)) return true;
+            if (condition.StartsWith("Error during CoLogger", StringComparison.Ordinal)) return true;
+
+            return false;
+        }
+
+        private static CoLoggerEntryLevel MapUnityLogType(LogType type)
+        {
+            switch (type)
+            {
+                case LogType.Warning:
+                    return CoLoggerEntryLevel.Warning;
+                case LogType.Assert:
+                case LogType.Error:
+                    return CoLoggerEntryLevel.Error;
+                case LogType.Exception:
+                    return CoLoggerEntryLevel.Critical;
+                default:
+                    return CoLoggerEntryLevel.Information;
+            }
+        }
+
         private static bool IsRequestFailed(UnityWebRequest request)
         {
 #if UNITY_2020_2_OR_NEWER
@@ -284,6 +334,26 @@ namespace CoradoLog.Web
 #else
             return request.isNetworkError || request.isHttpError;
 #endif
+        }
+
+        private static string BuildStackTrace(CoLoggerEntry entry)
+        {
+            if (entry == null) return null;
+
+            var exceptionStackTrace = entry.Exception?.StackTrace;
+            var callStack = entry.CallStack;
+
+            if (string.IsNullOrWhiteSpace(exceptionStackTrace))
+            {
+                return string.IsNullOrWhiteSpace(callStack) ? null : callStack;
+            }
+
+            if (string.IsNullOrWhiteSpace(callStack))
+            {
+                return exceptionStackTrace;
+            }
+
+            return $"Exception stack trace:\n{exceptionStackTrace}\n\nCoLogger call stack:\n{callStack}";
         }
 
         private static string MapLevel(CoLoggerEntryLevel level)
@@ -349,6 +419,8 @@ namespace CoradoLog.Web
         }
     }
 }
+
+
 
 
 

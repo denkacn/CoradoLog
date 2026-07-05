@@ -8,7 +8,6 @@ namespace CoradoLog.Web
     public sealed class CoLoggerWebSettings : ScriptableObject
     {
         [Header("Connection")]
-        public bool IsEnabled = true;
         public string BaseUrl = "https://logs.bypuziki.com";
         public string ApiToken = string.Empty;
 
@@ -25,6 +24,8 @@ namespace CoradoLog.Web
         public int MaxQueueSize = 1000;
         public bool FlushOnApplicationQuit = true;
 
-        public bool IsReady => IsEnabled && !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(ApiToken);
+        public bool IsReady => !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(ApiToken);
     }
 }
+
+

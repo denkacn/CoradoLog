@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using CoradoLog.Web;
 using UnityEngine;
 
 namespace CoradoLog
@@ -52,6 +53,12 @@ namespace CoradoLog
         public bool IsLogToHtml = false;
         public string HtmlFileWriterPath = "";
         public bool IsOnlyCoLoggerLogs = true;
+
+        [Space(10)]
+
+        [Header("Log To Web Settings")]
+        public bool IsLogToWeb = false;
+        public CoLoggerWebSettings WebSettings;
         
         public bool IsSenderExist(string senderName)
         {
@@ -140,3 +147,4 @@ namespace CoradoLog
         }
     }
 }
+

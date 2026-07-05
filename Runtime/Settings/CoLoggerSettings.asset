@@ -51,3 +51,5 @@ MonoBehaviour:
   IsLogToHtml: 0
   HtmlFileWriterPath: 
   IsOnlyCoLoggerLogs: 0
+  IsLogToWeb: 1
+  WebSettings: {fileID: 11400000, guid: ac09db2cf7e1fe440a8f7fd357755c79, type: 2}

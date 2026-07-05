@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CoradoLog.Interfaces;
+using CoradoLog.Web;
 using UnityEngine;
 
 namespace CoradoLog
@@ -18,6 +19,7 @@ namespace CoradoLog
         private static ICoLoggerTransmitter _transmitter;
         private static CoLoggerFileWriter _writer;
         private static CoLoggerHtmlFileWriter _htmlWriter;
+        private static CoLoggerWebModule _webModule;
         private static ICoLoggerCustomDataProvider _customDataProvider;
         private static readonly List<ContextSetting> _runtimeContextSettings = new List<ContextSetting>();
         private static CoLoggerLifeTimeCycle _lifeTimeCycle;
@@ -54,6 +56,11 @@ namespace CoradoLog
             if (_settings.IsLogToHtml)
             {
                 EnableHtmlWriter(Application.dataPath + _settings.HtmlFileWriterPath, _settings.IsOnlyCoLoggerLogs);
+            }
+
+            if (_settings.IsLogToWeb)
+            {
+                EnableWebModule(_settings.WebSettings);
             }
             
             Log("CoLogger Initialize", CONTEXT_SYSTEM);
@@ -98,6 +105,20 @@ namespace CoradoLog
             {
                 Debug.LogError($"Failed to enable HTML writer: {ex.Message}");
             }
+        }
+
+        public static void EnableWebModule(CoLoggerWebSettings settings)
+        {
+            if (_webModule != null) return;
+
+            if (settings == null)
+            {
+                Debug.LogWarning("CoLogger web logging is enabled, but WebSettings is not assigned.");
+                return;
+            }
+
+            _webModule = new CoLoggerWebModule();
+            _webModule.Init(settings, _lifeTimeCycle);
         }
 
         public static void SetTransmitter(ICoLoggerTransmitter transmitter)
@@ -327,6 +348,14 @@ namespace CoradoLog
             DiscardInternal(true);
         }
 
+        internal static void FlushWebFromLifeTimeCycle(CoLoggerLifeTimeCycle lifeTimeCycle)
+        {
+            if (_lifeTimeCycle != lifeTimeCycle || _settings == null || !_settings.IsLogToWeb) return;
+            if (_settings.WebSettings == null || !_settings.WebSettings.FlushOnApplicationQuit) return;
+
+            _webModule?.Flush();
+        }
+
         internal static void DiscardFromLifeTimeCycle(CoLoggerLifeTimeCycle lifeTimeCycle)
         {
             if (_lifeTimeCycle == lifeTimeCycle)
@@ -389,6 +418,7 @@ namespace CoradoLog
             {
                 _writer?.Discard();
                 _htmlWriter?.Discard();
+                _webModule?.Discard();
             }
             catch (Exception ex)
             {
@@ -398,6 +428,7 @@ namespace CoradoLog
             {
                 _writer = null;
                 _htmlWriter = null;
+                _webModule = null;
                 _settings = null;
                 _senders = null;
                 _transmitter = null;
@@ -424,6 +455,9 @@ namespace CoradoLog
         void ResendMe(string message, string sender, string context, EDebugImportance importance);
     }
 }
+
+
+
 
 
 

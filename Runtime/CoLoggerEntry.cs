@@ -24,7 +24,8 @@ namespace CoradoLog
             string tag,
             EDebugImportance importance,
             Exception exception,
-            object customData)
+            object customData,
+            string callStack)
         {
             Timestamp = timestamp;
             Sequence = sequence;
@@ -36,6 +37,7 @@ namespace CoradoLog
             Importance = importance;
             Exception = exception;
             CustomData = customData;
+            CallStack = callStack ?? string.Empty;
         }
 
         public DateTime Timestamp { get; }
@@ -48,7 +50,6 @@ namespace CoradoLog
         public EDebugImportance Importance { get; }
         public Exception Exception { get; }
         public object CustomData { get; }
+        public string CallStack { get; }
     }
 }
-
-

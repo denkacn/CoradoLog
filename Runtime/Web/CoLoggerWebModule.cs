@@ -207,11 +207,29 @@ namespace CoradoLog.Web
                 message = entry.Message,
                 exceptionType = entry.Exception?.GetType().FullName,
                 exceptionMessage = entry.Exception?.Message,
-                stackTrace = entry.Exception?.StackTrace,
+                stackTrace = BuildStackTrace(entry),
                 customData = entry.CustomData?.ToString()
             };
         }
+        private static string BuildStackTrace(CoLoggerEntry entry)
+        {
+            if (entry == null) return null;
 
+            var exceptionStackTrace = entry.Exception?.StackTrace;
+            var callStack = entry.CallStack;
+
+            if (string.IsNullOrWhiteSpace(exceptionStackTrace))
+            {
+                return string.IsNullOrWhiteSpace(callStack) ? null : callStack;
+            }
+
+            if (string.IsNullOrWhiteSpace(callStack))
+            {
+                return exceptionStackTrace;
+            }
+
+            return $"Exception stack trace:\n{exceptionStackTrace}\n\nCoLogger call stack:\n{callStack}";
+        }
         private int GetBatchSize()
         {
             if (_settings == null) return 1;
@@ -331,5 +349,8 @@ namespace CoradoLog.Web
         }
     }
 }
+
+
+
 
 

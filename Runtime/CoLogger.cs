@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using CoradoLog.Interfaces;
 using CoradoLog.Web;
 using UnityEngine;
@@ -340,9 +341,68 @@ namespace CoradoLog
                 tag,
                 importance,
                 ex,
-                customData);
+                customData,
+                CaptureCallStack());
         }
 
+
+        private static string CaptureCallStack()
+        {
+            try
+            {
+                var stackTrace = new System.Diagnostics.StackTrace(2, true);
+                var builder = new StringBuilder();
+                var frames = stackTrace.GetFrames();
+
+                if (frames == null) return string.Empty;
+
+                for (var i = 0; i < frames.Length; i++)
+                {
+                    var frame = frames[i];
+                    var method = frame.GetMethod();
+                    var declaringType = method?.DeclaringType;
+                    var declaringTypeName = declaringType != null ? declaringType.FullName : string.Empty;
+
+                    if (declaringType == typeof(CoLogger)) continue;
+
+                    if (builder.Length > 0)
+                    {
+                        builder.AppendLine();
+                    }
+
+                    builder.Append("at ");
+
+                    if (!string.IsNullOrEmpty(declaringTypeName))
+                    {
+                        builder.Append(declaringTypeName);
+                        builder.Append(".");
+                    }
+
+                    builder.Append(method != null ? method.Name : "UnknownMethod");
+
+                    var fileName = frame.GetFileName();
+                    var lineNumber = frame.GetFileLineNumber();
+
+                    if (!string.IsNullOrEmpty(fileName))
+                    {
+                        builder.Append(" in ");
+                        builder.Append(fileName);
+
+                        if (lineNumber > 0)
+                        {
+                            builder.Append(":line ");
+                            builder.Append(lineNumber);
+                        }
+                    }
+                }
+
+                return builder.ToString();
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
         public static void Discard()
         {
             DiscardInternal(true);
@@ -455,6 +515,7 @@ namespace CoradoLog
         void ResendMe(string message, string sender, string context, EDebugImportance importance);
     }
 }
+
 
 
 

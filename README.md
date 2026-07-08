@@ -1,46 +1,211 @@
-# CoradoLog
+﻿# CoradoLog
 
-### Unity Logs Extension.
+CoradoLog is a Unity logging package for structured runtime logs. It adds senders, contexts, tags, importance filters, file/HTML output, Unity log capture, and optional web delivery to a CoradoWeb-compatible backend.
 
-**CoLoggerInitializer** - setting prefab
+Package name: `com.puzikgames.coradolog`  
+Unity version: `2019.1+`
 
-Can add senders, context, and importan.
-Can enable disable log, from senders and contexts.
+![CoradoLog Settings](Doc/settings.png)
 
-Can generate vars for fast access to senders and contexts.
-Can generate personale sender debug class.
+## Features
 
-<img src="Doc/settings.png" alt="Providers" width="600"/>
+- Structured logs with `sender`, `context`, `tag`, `importance`, `exception`, `customData`, and call stack.
+- Unity Console output with colored context, tag and importance formatting.
+- Runtime context support.
+- Text file writer.
+- HTML file writer.
+- Web log delivery through `UnityWebRequest`.
+- Unity warning/error/exception capture for web delivery.
+- Duplicate protection for repeated logs from `Update` loops.
+- Generated `CoLoggerVars` and sender-specific helper classes.
+- Optional standalone `CoLoggerWebModule` for projects that already have their own logger.
 
-```csharp
-CoLogger.Log("Test log");
-CoLogger.LogError("Test log ex", new System.Exception("Test"));
+## Installation
+
+Install as a Unity package from Git URL:
+
+```text
+https://github.com/denkacn/CoradoLog.git
 ```
 
-If you have user Test and generate vars and sender class:
-Access after generate:
+Or add it to `Packages/manifest.json`:
 
-```csharp
-CoLogger.Log("Test log", CoLoggerVars.Senders.System, CoLoggerVars.Contexts.System);
-CoLogger.LogError("Test log ex", CoLoggerVars.Contexts.System, new System.Exception("Test"));
+```json
+{
+  "dependencies": {
+    "com.puzikgames.coradolog": "https://github.com/denkacn/CoradoLog.git"
+  }
+}
 ```
 
-All generated object put to CoradoLogGenerated folder.
+## Quick Start
 
-Can create log for some context and senders:
-
-```csharp
-CoLog log = new CoLog("Test", "TestContext");
-log.Log("Test Message");
-```
-or send directly:
+1. Create a settings asset from `Assets/Create/CoLogger/CoLoggerSettings`.
+2. Add `CoLoggerInitiator` to the first scene.
+3. Assign the settings asset to the initiator.
+4. Configure senders, contexts and output options.
+5. Log from code.
 
 ```csharp
-Log("Test Message", "TestUser", "TestContext");
+using System;
+using CoradoLog;
+
+public class Example
+{
+    public void Run()
+    {
+        CoLogger.Log("Game started");
+        CoLogger.LogWarning("Low health", "Gameplay");
+        CoLogger.LogError("Save failed", new Exception("File is missing"));
+    }
+}
 ```
 
-<img src="Doc/output.png" alt="Providers" width="1000"/>
+With explicit sender, context and tag:
 
-Can save logs to a file or HTML for more convenient data handling.
+```csharp
+CoLogger.Log(
+    "Enemy spawned",
+    "BattleSystem",
+    "Gameplay",
+    "Spawn",
+    EDebugImportance.Medium);
+```
 
-<img src="Doc/html_file.png" alt="Providers" width="1000"/>
+## CoLog Wrapper
+
+Use `CoLog` when one class repeatedly logs with the same sender and context.
+
+```csharp
+using CoradoLog;
+
+public class InventoryService
+{
+    private readonly CoLog _log = new CoLog("Inventory", "Gameplay", EDebugImportance.Medium);
+
+    public void AddItem(string itemId)
+    {
+        _log.Log($"Add item {itemId}");
+        _log.LogWarning("Inventory is almost full");
+    }
+}
+```
+
+## Generated Accessors
+
+The `CoLoggerInitiator` inspector can generate constants for senders and contexts:
+
+```csharp
+CoLogger.Log(
+    "System ready",
+    CoLoggerVars.Senders.System,
+    CoLoggerVars.Contexts.System,
+    string.Empty);
+```
+
+Generated files are placed in:
+
+```text
+Assets/{GeneratePath}/CoradoLogGenerated
+```
+
+## File And HTML Output
+
+CoradoLog can save logs to text files or HTML files from `CoLoggerSettings`.
+
+![CoradoLog Console Output](Doc/output.png)
+
+HTML output is useful when logs need to be shared or inspected outside Unity.
+
+![CoradoLog HTML Output](Doc/html_file.png)
+
+## Web Logging
+
+CoradoLog can send logs to a web service using `CoLoggerWebSettings`.
+
+Typical flow:
+
+1. Enable `IsLogToWeb` in `CoLoggerSettings`.
+2. Create `CoLoggerWebSettings` from `Assets/Create/CoLogger/Web Settings`.
+3. Set `BaseUrl`, for example `https://logs.bypuziki.com`.
+4. Set the project/environment `ApiToken`.
+5. Choose sources: `SendCoLoggerLogs`, `SendUnityLogs`, or both.
+
+The web module sends batches to:
+
+```text
+{BaseUrl}/api/v1/logs/batch
+```
+
+with header:
+
+```text
+X-Corado-Token: {ApiToken}
+```
+
+`SendUnityLogs` captures Unity warnings, errors, asserts and exceptions. Regular `Debug.Log` messages are ignored by default.
+
+## Duplicate Protection
+
+Web delivery includes protection against repeated identical logs, for example logs printed every frame in `Update`.
+
+Default behavior:
+
+- send first `3` identical logs;
+- suppress further duplicates during `5` seconds;
+- optionally send one summary log with the suppressed count.
+
+This can be configured in `CoLoggerWebSettings`:
+
+```text
+IsDuplicateProtectionEnabled
+MaxSameLogsPerWindow
+DuplicateWindowSeconds
+SendDuplicateSummary
+```
+
+## Standalone Web Module
+
+If a project already has its own logger, it can use only `CoLoggerWebModule`.
+
+```csharp
+using CoradoLog;
+using CoradoLog.Web;
+using UnityEngine;
+
+public sealed class MyWebLogBridge : MonoBehaviour
+{
+    [SerializeField] private CoLoggerWebSettings _settings;
+    private CoLoggerWebModule _webModule;
+
+    private void Awake()
+    {
+        _webModule = new CoLoggerWebModule();
+        _webModule.Init(_settings, this);
+    }
+
+    public void Send(string message)
+    {
+        _webModule.QueueLog(
+            message,
+            CoLoggerEntryLevel.Information,
+            sender: "MyLogger",
+            context: "Runtime");
+    }
+
+    private void OnDestroy()
+    {
+        _webModule?.Discard();
+    }
+}
+```
+
+## Documentation
+
+Full documentation is available here:
+
+[CoradoLog Documentation](Doc/README.md)
+
+## License
+
+License is not specified in this package yet.

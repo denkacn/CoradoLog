@@ -15,7 +15,7 @@ Unity version: `2019.1+`
 - Text file writer.
 - HTML file writer.
 - Web log delivery through `UnityWebRequest`.
-- Unity warning/error/exception capture for web delivery.
+- Unity log/warning/error/exception capture for web delivery.
 - Duplicate protection for repeated logs from `Update` loops.
 - Generated `CoLoggerVars` and sender-specific helper classes.
 - Optional standalone `CoLoggerWebModule` for projects that already have their own logger.
@@ -129,7 +129,7 @@ Typical flow:
 2. Create `CoLoggerWebSettings` from `Assets/Create/CoLogger/Web Settings`.
 3. Set `BaseUrl`.
 4. Set the project/environment `ApiToken`.
-5. Choose sources: `SendCoLoggerLogs`, `SendUnityLogs`, or both.
+5. Choose sources: `SendCoLoggerLogs`, `SendUnityLogs`, and optionally `SendUnityInfoLogs`.
 
 The web module sends batches to:
 
@@ -143,7 +143,7 @@ with header:
 X-Corado-Token: {ApiToken}
 ```
 
-`SendUnityLogs` captures Unity warnings, errors, asserts and exceptions. Regular `Debug.Log` messages are ignored by default.
+`SendUnityLogs` captures Unity warnings, errors, asserts and exceptions. If `SendUnityInfoLogs` is enabled, regular `Debug.Log` / `LogType.Log` messages are sent too. Unity does not expose the `Debug.Log(message, context)` object reference through `Application.logMessageReceived`, so CoradoLog sends the formatted message and stack trace, but not the original context object.
 
 ## Duplicate Protection
 
@@ -209,3 +209,4 @@ Full documentation is available here:
 ## License
 
 License is not specified in this package yet.
+

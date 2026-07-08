@@ -176,9 +176,9 @@ namespace CoradoLog.Web
             if (_settings == null || !_settings.IsReady || !_settings.SendUnityLogs) return;
             if (CoLoggerWebHelper.IsIgnoredUnityLog(condition)) return;
 
-            var level = CoLoggerWebHelper.MapUnityLogType(type);
-            if (level != CoLoggerEntryLevel.Warning && level != CoLoggerEntryLevel.Error && level != CoLoggerEntryLevel.Critical) return;
+            if (!CoLoggerWebHelper.IsUnityLogTypeEnabled(type, _settings)) return;
 
+            var level = CoLoggerWebHelper.MapUnityLogType(type);
             var entry = new CoLoggerEntry(
                 DateTime.Now,
                 ++_unityLogSequence,
@@ -187,7 +187,7 @@ namespace CoradoLog.Web
                 "Unity",
                 "Unity",
                 type.ToString(),
-                level == CoLoggerEntryLevel.Warning ? EDebugImportance.Medium : EDebugImportance.Critical,
+                CoLoggerWebHelper.MapUnityImportance(level),
                 null,
                 null,
                 stackTrace);
@@ -341,3 +341,5 @@ namespace CoradoLog.Web
         }
     }
 }
+
+

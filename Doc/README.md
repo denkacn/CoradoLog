@@ -232,7 +232,8 @@ Assign it to `CoLoggerSettings.WebSettings` and enable `IsLogToWeb`.
 - `BaseUrl` - service URL
 - `ApiToken` - project/environment token received from the web service.
 - `SendCoLoggerLogs` - send logs produced by `CoLogger`.
-- `SendUnityLogs` - capture Unity warnings, errors, asserts and exceptions.
+- `SendUnityLogs` - capture Unity logs through `Application.logMessageReceived`.
+- `SendUnityInfoLogs` - also send regular `Debug.Log` / `LogType.Log` messages.
 - `Source` - client source name, default `Unity`.
 - `AppVersion` - optional app version. If empty, `Application.version` is used.
 - `BuildNumber` - optional build number.
@@ -324,12 +325,15 @@ When `SendUnityLogs` is enabled, the web module subscribes to `Application.logMe
 
 Captured Unity types:
 
+- `LogType.Log` -> `Information` when `SendUnityInfoLogs` is enabled
 - `LogType.Warning` -> `Warning`
 - `LogType.Assert` -> `Error`
 - `LogType.Error` -> `Error`
 - `LogType.Exception` -> `Critical`
 
-Regular Unity `LogType.Log` messages are ignored by web capture. CoradoLog-formatted Unity messages containing `[CL]` are also ignored to avoid duplicate web sends when `SendCoLoggerLogs` is enabled.
+Regular Unity `LogType.Log` messages are sent when `SendUnityInfoLogs` is enabled. CoradoLog-formatted Unity messages containing `[CL]` are still ignored to avoid duplicate web sends when `SendCoLoggerLogs` is enabled.
+
+Unity does not expose the `UnityEngine.Object context` argument from `Debug.Log(message, context)` through `Application.logMessageReceived`, so CoradoLog can send the formatted message and stack trace, but not the original context object reference.
 
 ## Troubleshooting
 
@@ -366,4 +370,5 @@ SendDuplicateSummary = true
 ### Stack trace is missing
 
 For CoLogger logs, stack trace is captured by `CoLogger` when the entry is created. For Unity logs, stack trace comes from `Application.logMessageReceived`. Player build settings and scripting backend can affect how much file/line information Unity provides.
+
 

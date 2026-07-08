@@ -97,6 +97,31 @@ namespace CoradoLog.Web
             }
         }
 
+        public static bool IsUnityLogTypeEnabled(LogType type, CoLoggerWebSettings settings)
+        {
+            if (settings == null) return false;
+            if (type == LogType.Log) return settings.SendUnityInfoLogs;
+
+            return type == LogType.Warning ||
+                   type == LogType.Assert ||
+                   type == LogType.Error ||
+                   type == LogType.Exception;
+        }
+
+        public static EDebugImportance MapUnityImportance(CoLoggerEntryLevel level)
+        {
+            switch (level)
+            {
+                case CoLoggerEntryLevel.Warning:
+                    return EDebugImportance.Medium;
+                case CoLoggerEntryLevel.Error:
+                case CoLoggerEntryLevel.Critical:
+                    return EDebugImportance.Critical;
+                default:
+                    return EDebugImportance.All;
+            }
+        }
+
         public static bool IsImmediateFlushLevel(CoLoggerEntryLevel level)
         {
             return level == CoLoggerEntryLevel.Warning ||
@@ -229,3 +254,5 @@ namespace CoradoLog.Web
         }
     }
 }
+
+

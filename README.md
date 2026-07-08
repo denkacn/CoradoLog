@@ -127,7 +127,7 @@ Typical flow:
 
 1. Enable `IsLogToWeb` in `CoLoggerSettings`.
 2. Create `CoLoggerWebSettings` from `Assets/Create/CoLogger/Web Settings`.
-3. Set `BaseUrl`, for example `https://logs.bypuziki.com`.
+3. Set `BaseUrl`.
 4. Set the project/environment `ApiToken`.
 5. Choose sources: `SendCoLoggerLogs`, `SendUnityLogs`, or both.
 

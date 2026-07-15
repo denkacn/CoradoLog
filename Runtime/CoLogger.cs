@@ -29,11 +29,25 @@ namespace CoradoLog
         private static bool _isMissingInitializationWarningLogged;
         private static long _logSequence;
 
-        public static bool IsInitialized => _isInitialized;
+        public static bool IsDisabled
+        {
+            get
+            {
+#if CORADOLOG_DISABLED
+                return true;
+#else
+                return false;
+#endif
+            }
+        }
+
+        public static bool IsInitialized => !IsDisabled && _isInitialized;
         public static event Action<CoLoggerEntry> LogReceived;
         
         public static void Init(CoLoggerSettings settings)
         {
+            if (IsDisabled) return;
+
             if (settings == null)
                 throw new ArgumentNullException(nameof(settings));
 
@@ -69,6 +83,7 @@ namespace CoradoLog
 
         public static void EnableFileWriter(string path, string prefix = "")
         {
+            if (IsDisabled) return;
             if (_writer != null) return;
 
             try
@@ -91,6 +106,7 @@ namespace CoradoLog
 
         public static void EnableHtmlWriter(string path, bool isOnlyCoLoggerLogs, string suffix = "")   
         {
+            if (IsDisabled) return;
             if (_htmlWriter != null) return;
 
             try
@@ -110,6 +126,7 @@ namespace CoradoLog
 
         public static void EnableWebModule(CoLoggerWebSettings settings)
         {
+            if (IsDisabled) return;
             if (_webModule != null) return;
 
             if (settings == null)
@@ -124,16 +141,22 @@ namespace CoradoLog
 
         public static void SetTransmitter(ICoLoggerTransmitter transmitter)
         {
+            if (IsDisabled) return;
+
             _transmitter = transmitter;
         }
 
         public static void SetDefaultParams(string senders)
         {
+            if (IsDisabled) return;
+
             _senders = senders;
         }
 
         public static void SetCustomDataProvider(ICoLoggerCustomDataProvider customDataProvider)
         {
+            if (IsDisabled) return;
+
             _customDataProvider = customDataProvider;
         }
         
@@ -199,6 +222,7 @@ namespace CoradoLog
 
         private static void LogInternal(CoLoggerEntryLevel level, string message, string sender, string context, string tag, EDebugImportance importance, Exception ex, object customData)
         {
+            if (IsDisabled) return;
             if (!IsEnsureInitialized(message, sender, context, tag, ex)) return;
 
             if (!string.IsNullOrEmpty(tag) && !_settings.IsTagExist(tag)) return;
@@ -248,6 +272,7 @@ namespace CoradoLog
 
         public static void AddContext(string context)
         {
+            if (IsDisabled) return;
             if (!IsEnsureInitialized($"Cannot add context '{context}' before CoLogger initialization.", SENDER_SYSTEM, CONTEXT_SYSTEM, string.Empty, null)) return;
             if (string.IsNullOrEmpty(context)) return;
             if (FindSettingsContext(context) != null) return;
@@ -451,11 +476,14 @@ namespace CoradoLog
         }
         public static void Discard()
         {
+            if (IsDisabled) return;
+
             DiscardInternal(true);
         }
 
         internal static void FlushWebFromLifeTimeCycle(CoLoggerLifeTimeCycle lifeTimeCycle)
         {
+            if (IsDisabled) return;
             if (_lifeTimeCycle != lifeTimeCycle || _settings == null || !_settings.IsLogToWeb) return;
             if (_settings.WebSettings == null || !_settings.WebSettings.FlushOnApplicationQuit) return;
 
@@ -464,6 +492,8 @@ namespace CoradoLog
 
         internal static void DiscardFromLifeTimeCycle(CoLoggerLifeTimeCycle lifeTimeCycle)
         {
+            if (IsDisabled) return;
+
             if (_lifeTimeCycle == lifeTimeCycle)
             {
                 _lifeTimeCycle = null;
@@ -482,6 +512,7 @@ namespace CoradoLog
 
         private static bool IsEnsureInitialized(string message, string sender, string context, string tag, Exception ex)
         {
+            if (IsDisabled) return false;
             if (_isInitialized && _settings != null) return true;
 
             if (!_isMissingInitializationWarningLogged)
@@ -561,6 +592,7 @@ namespace CoradoLog
         void ResendMe(string message, string sender, string context, EDebugImportance importance);
     }
 }
+
 
 
 

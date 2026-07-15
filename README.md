@@ -19,6 +19,7 @@ Unity version: `2019.1+`
 - Duplicate protection for repeated logs from `Update` loops.
 - Generated `CoLoggerVars` and sender-specific helper classes.
 - Optional standalone `CoLoggerWebModule` for projects that already have their own logger.
+- Compile-time disable switch through `CORADOLOG_DISABLED`.
 
 ## Installation
 
@@ -164,6 +165,37 @@ DuplicateWindowSeconds
 SendDuplicateSummary
 ```
 
+## Disable CoradoLog
+
+To disable the logger completely, add this scripting define symbol in Unity:
+
+```text
+CORADOLOG_DISABLED
+```
+
+Unity path:
+
+```text
+Project Settings > Player > Other Settings > Scripting Define Symbols
+```
+
+When this define is enabled:
+
+- `CoLogger.Init(...)` does nothing;
+- `CoLogger.Log`, `LogWarning`, `LogError` do nothing;
+- file, HTML and web writers are not created;
+- `LogReceived` is not raised;
+- existing calls still compile.
+
+You can check the state in code:
+
+```csharp
+if (CoLogger.IsDisabled)
+{
+    // CoradoLog is compiled as no-op.
+}
+```
+
 ## Standalone Web Module
 
 If a project already has its own logger, it can use only `CoLoggerWebModule`.
@@ -209,4 +241,5 @@ Full documentation is available here:
 ## License
 
 License is not specified in this package yet.
+
 

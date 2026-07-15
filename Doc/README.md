@@ -57,7 +57,42 @@ Lifecycle behavior:
 - Calling `CoLogger.Log` before `Init` writes a fallback Unity log and prints one warning about missing initialization.
 - Repeated `Init` is ignored and writes a Unity warning. Call `CoLogger.Discard()` before initializing again.
 - `CoLogger.Discard()` closes writers, discards the web module, clears subscriptions, runtime contexts, events and runtime state.
+- If `CORADOLOG_DISABLED` is defined, `CoLogger` becomes a no-op and does not initialize runtime state.
 - On application quit, the lifecycle object asks the web module to flush if `FlushOnApplicationQuit` is enabled.
+
+## Disable CoradoLog
+
+For builds where logging must be fully disabled, add this scripting define symbol:
+
+```text
+CORADOLOG_DISABLED
+```
+
+Unity path:
+
+```text
+Project Settings > Player > Other Settings > Scripting Define Symbols
+```
+
+When `CORADOLOG_DISABLED` is enabled:
+
+- `CoLogger.IsDisabled` returns `true`.
+- `CoLogger.IsInitialized` returns `false`.
+- `CoLogger.Init(...)` returns immediately.
+- `CoLogger.Log`, `LogWarning`, `LogError` return immediately.
+- `CoLogger.AddContext`, `SetTransmitter`, `SetDefaultParams`, `SetCustomDataProvider` do nothing.
+- File writer, HTML writer, web module and lifecycle object are not created.
+- `LogReceived` is not raised.
+- Existing calls still compile, so game code does not need `#if` guards around every log call.
+
+Example:
+
+```csharp
+if (CoLogger.IsDisabled)
+{
+    // CoradoLog is compiled as no-op.
+}
+```
 
 ## Settings
 
@@ -341,6 +376,7 @@ Unity does not expose the `UnityEngine.Object context` argument from `Debug.Log(
 
 Check:
 
+- `CORADOLOG_DISABLED` is not added to Scripting Define Symbols unless you intentionally disabled CoradoLog.
 - `CoLogger.Init(settings)` was called or `CoLoggerInitiator` exists in the first scene.
 - Sender exists in `SendeSettings` and is enabled.
 - Context exists in `ContextSettings` and is enabled, or `IsAddContextInRuntime` is enabled.
@@ -351,6 +387,7 @@ Check:
 
 Check:
 
+- `CORADOLOG_DISABLED` is not added to Scripting Define Symbols unless you intentionally disabled CoradoLog.
 - `CoLoggerSettings.IsLogToWeb` is enabled.
 - `CoLoggerSettings.WebSettings` is assigned.
 - `CoLoggerWebSettings.BaseUrl` and `ApiToken` are not empty.
@@ -370,5 +407,8 @@ SendDuplicateSummary = true
 ### Stack trace is missing
 
 For CoLogger logs, stack trace is captured by `CoLogger` when the entry is created. For Unity logs, stack trace comes from `Application.logMessageReceived`. Player build settings and scripting backend can affect how much file/line information Unity provides.
+
+
+
 
 

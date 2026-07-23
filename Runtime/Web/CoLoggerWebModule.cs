@@ -41,7 +41,7 @@ namespace CoradoLog.Web
 
             _settings = settings;
             _coroutineRunner = coroutineRunner;
-            _sessionId = CoLoggerWebHelper.CreateSessionId();
+            _sessionId = CoLoggerWebHelper.CreateSessionId(_settings);
             Subscribe();
             _flushCoroutine = _coroutineRunner.StartCoroutine(FlushLoop());
         }
@@ -341,5 +341,6 @@ namespace CoradoLog.Web
         }
     }
 }
+
 
 

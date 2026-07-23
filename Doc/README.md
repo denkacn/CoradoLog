@@ -275,10 +275,48 @@ Assign it to `CoLoggerSettings.WebSettings` and enable `IsLogToWeb`.
 - `BuildNumber` - optional build number.
 - `ExternalUserId` - optional user/player identifier.
 - `UseDeviceUniqueIdentifier` - send `SystemInfo.deviceUniqueIdentifier` as device id.
+- `SessionPrefixFilePath` - file path inside `StreamingAssets` used to override the session id prefix. Default: `corado-session-prefix.txt`.
 - `BatchSize` - max logs per request. The module clamps it to backend max batch size.
 - `FlushIntervalSeconds` - periodic flush interval.
 - `MaxQueueSize` - max local queue size. Old logs are dropped when the queue is full.
 - `FlushOnApplicationQuit` - flush on application quit.
+
+Session ids are generated as:
+
+```text
+{prefix}{guid}
+```
+
+By default, prefix is `unity-`, for example `unity-0f8fad5b9cb469fbd2c9037f6a8d9e1`. If `StreamingAssets/{SessionPrefixFilePath}` exists, CoradoLog reads the file, trims the content, and uses it as the prefix. If the file is missing, empty, or cannot be read, it falls back to `unity-`.
+
+For example, if `Assets/StreamingAssets/corado-session-prefix.txt` contains:
+
+```text
+android-
+```
+
+the session id will look like:
+
+```text
+android-0f8fad5b9cb469fbd2c9037f6a8d9e1
+```
+
+Editor/build scripts can write this file before a build with `CoLoggerSessionPrefixFileWriter`:
+
+```csharp
+using CoradoLog.Editor;
+
+CoLoggerSessionPrefixFileWriter.WriteDefaultSessionPrefixFile("steam-");
+CoLoggerSessionPrefixFileWriter.WriteSessionPrefixFile(webSettings, "android-");
+CoLoggerSessionPrefixFileWriter.WriteSessionPrefixFile("custom/path/session-prefix.txt", "ios-");
+```
+
+Available editor helper methods:
+
+- `WriteDefaultSessionPrefixFile(string prefix)` - writes `Assets/StreamingAssets/corado-session-prefix.txt`.
+- `WriteSessionPrefixFile(CoLoggerWebSettings settings, string prefix)` - uses `settings.SessionPrefixFilePath`.
+- `WriteSessionPrefixFile(string relativePath, string prefix)` - writes a custom path inside `Assets/StreamingAssets`.
+- `GetSessionPrefixAssetPath(...)` - returns the target `Assets/StreamingAssets/...` asset path.
 
 The module sends batches to:
 
@@ -409,6 +447,7 @@ SendDuplicateSummary = true
 ### Stack trace is missing
 
 For CoLogger logs, stack trace is captured by `CoLogger` when the entry is created. For Unity logs, stack trace comes from `Application.logMessageReceived`. Player build settings and scripting backend can affect how much file/line information Unity provides.
+
 
 
 

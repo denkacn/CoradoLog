@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -43,9 +44,39 @@ namespace CoradoLog.Web
             return Mathf.Clamp(settings.BatchSize, 1, BackendMaxBatchSize);
         }
 
-        public static string CreateSessionId()
+        public static string CreateSessionId(CoLoggerWebSettings settings)
         {
-            return $"unity-{Guid.NewGuid():N}";
+            return $"{GetSessionPrefix(settings)}{Guid.NewGuid():N}";
+        }
+
+        public static string GetSessionPrefix(CoLoggerWebSettings settings)
+        {
+            const string defaultPrefix = "unity-";
+            if (settings == null) return defaultPrefix;
+
+            var filePath = GetSessionPrefixFileFullPath(settings.SessionPrefixFilePath);
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath)) return defaultPrefix;
+
+            try
+            {
+                var prefix = File.ReadAllText(filePath).Trim();
+                return string.IsNullOrWhiteSpace(prefix) ? defaultPrefix : prefix;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"Failed to read CoLogger session prefix file '{filePath}': {ex.Message}");
+                return defaultPrefix;
+            }
+        }
+
+        public static string GetSessionPrefixFileFullPath(string relativePath)
+        {
+            var path = string.IsNullOrWhiteSpace(relativePath)
+                ? "corado-session-prefix.txt"
+                : relativePath.Trim();
+
+            path = path.Replace('\\', '/').TrimStart('/');
+            return Path.Combine(Application.streamingAssetsPath, path);
         }
 
         public static void RequeueFront(Queue<CoLoggerEntry> queue, List<CoLoggerEntry> batch, int maxQueueSize)
@@ -254,6 +285,7 @@ namespace CoradoLog.Web
         }
     }
 }
+
 
 
 

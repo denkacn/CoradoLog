@@ -24,6 +24,9 @@ namespace CoradoLog.Web
         public string ExternalUserId = string.Empty;
         public bool UseDeviceUniqueIdentifier = false;
 
+        [Header("Session")]
+        public string SessionPrefixFilePath = "corado-session-prefix.txt";
+
         [Header("Duplicate Protection")]
         public bool IsDuplicateProtectionEnabled = true;
         public int MaxSameLogsPerWindow = 3;
@@ -39,6 +42,8 @@ namespace CoradoLog.Web
         public bool IsReady => !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(ApiToken);
     }
 }
+
+
 
 
 

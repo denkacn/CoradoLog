@@ -270,6 +270,7 @@ Assign it to `CoLoggerSettings.WebSettings` and enable `IsLogToWeb`.
 - `SendUnityLogs` - capture Unity logs through `Application.logMessageReceived`.
 - `SendUnityInfoLogs` - also send regular `Debug.Log` / `LogType.Log` messages.
 - `SendUnityWarningLogs` - send Unity `LogType.Warning` messages.
+- `DisableForEditor` - do not initialize web transport while running in Unity Editor. Enabled by default.
 - `Source` - client source name, default `Unity`.
 - `AppVersion` - optional app version. If empty, `Application.version` is used.
 - `BuildNumber` - optional build number.
@@ -395,6 +396,8 @@ _webModule.QueueCritical("Critical message", sender: "MyLogger", context: "Runti
 
 ## Unity Log Capture
 
+When `DisableForEditor` is enabled, the web module does not initialize in Unity Editor and no editor logs are sent to web.
+
 When `SendUnityLogs` is enabled, the web module subscribes to `Application.logMessageReceived`.
 
 Captured Unity types:
@@ -429,6 +432,7 @@ Check:
 - `CORADOLOG_DISABLED` is not added to Scripting Define Symbols unless you intentionally disabled CoradoLog.
 - `CoLoggerSettings.IsLogToWeb` is enabled.
 - `CoLoggerSettings.WebSettings` is assigned.
+- `CoLoggerWebSettings.DisableForEditor` is disabled if you are testing web logs from Unity Editor.
 - `CoLoggerWebSettings.BaseUrl` and `ApiToken` are not empty.
 - `SendCoLoggerLogs` or `SendUnityLogs` is enabled depending on the source.
 - `SendUnityWarningLogs` is enabled if you expect Unity warnings in web logs.
@@ -447,6 +451,7 @@ SendDuplicateSummary = true
 ### Stack trace is missing
 
 For CoLogger logs, stack trace is captured by `CoLogger` when the entry is created. For Unity logs, stack trace comes from `Application.logMessageReceived`. Player build settings and scripting backend can affect how much file/line information Unity provides.
+
 
 
 

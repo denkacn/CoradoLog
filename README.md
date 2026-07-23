@@ -131,7 +131,8 @@ Typical flow:
 3. Set `BaseUrl`.
 4. Set the project/environment `ApiToken`.
 5. Choose sources: `SendCoLoggerLogs`, `SendUnityLogs`, and optionally `SendUnityInfoLogs` / `SendUnityWarningLogs`.
-6. Optional: set `SessionPrefixFilePath` to read the session id prefix from `StreamingAssets`.
+6. Keep `DisableForEditor` enabled if editor logs should not be sent to web.
+7. Optional: set `SessionPrefixFilePath` to read the session id prefix from `StreamingAssets`.
 
 The web module sends batches to:
 
@@ -156,6 +157,8 @@ CoLoggerSessionPrefixFileWriter.WriteDefaultSessionPrefixFile("steam-");
 CoLoggerSessionPrefixFileWriter.WriteSessionPrefixFile(webSettings, "android-");
 CoLoggerSessionPrefixFileWriter.WriteSessionPrefixFile("custom/path/session-prefix.txt", "ios-");
 ```
+
+`DisableForEditor` is enabled by default. When enabled, the web module does not initialize in the Unity Editor and no editor logs are sent to web.
 
 `SendUnityLogs` is the master switch for Unity log capture. `SendUnityWarningLogs` controls Unity warnings separately. Errors, asserts and exceptions are sent when `SendUnityLogs` is enabled. If `SendUnityInfoLogs` is enabled, regular `Debug.Log` / `LogType.Log` messages are sent too. Unity does not expose the `Debug.Log(message, context)` object reference through `Application.logMessageReceived`, so CoradoLog sends the formatted message and stack trace, but not the original context object.
 
@@ -254,6 +257,7 @@ Full documentation is available here:
 ## License
 
 License is not specified in this package yet.
+
 
 
 

@@ -17,6 +17,9 @@ namespace CoradoLog.Web
         public bool SendUnityInfoLogs = true;
         public bool SendUnityWarningLogs = true;
 
+        [Header("Editor")]
+        public bool DisableForEditor = true;
+
         [Header("Client")]
         public string Source = "Unity";
         public string AppVersion = string.Empty;
@@ -42,6 +45,7 @@ namespace CoradoLog.Web
         public bool IsReady => !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(ApiToken);
     }
 }
+
 
 
 

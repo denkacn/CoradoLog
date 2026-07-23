@@ -33,6 +33,8 @@ namespace CoradoLog.Web
             if (coroutineRunner == null)
                 throw new ArgumentNullException(nameof(coroutineRunner));
 
+            if (IsDisabledForEditor(settings)) return;
+
             if (IsInitialized)
             {
                 Debug.LogWarning("CoLoggerWebModule is already initialized. Call Discard() before initializing it again.");
@@ -44,6 +46,15 @@ namespace CoradoLog.Web
             _sessionId = CoLoggerWebHelper.CreateSessionId(_settings);
             Subscribe();
             _flushCoroutine = _coroutineRunner.StartCoroutine(FlushLoop());
+        }
+
+        private static bool IsDisabledForEditor(CoLoggerWebSettings settings)
+        {
+#if UNITY_EDITOR
+            return settings != null && settings.DisableForEditor && Application.isEditor;
+#else
+            return false;
+#endif
         }
 
         public void Discard()
@@ -341,6 +352,8 @@ namespace CoradoLog.Web
         }
     }
 }
+
+
 
 
 

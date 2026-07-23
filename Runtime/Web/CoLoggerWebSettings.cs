@@ -15,6 +15,7 @@ namespace CoradoLog.Web
         public bool SendCoLoggerLogs = true;
         public bool SendUnityLogs = true;
         public bool SendUnityInfoLogs = true;
+        public bool SendUnityWarningLogs = true;
 
         [Header("Client")]
         public string Source = "Unity";
@@ -38,6 +39,7 @@ namespace CoradoLog.Web
         public bool IsReady => !string.IsNullOrWhiteSpace(BaseUrl) && !string.IsNullOrWhiteSpace(ApiToken);
     }
 }
+
 
 
 

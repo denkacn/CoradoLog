@@ -101,9 +101,9 @@ namespace CoradoLog.Web
         {
             if (settings == null) return false;
             if (type == LogType.Log) return settings.SendUnityInfoLogs;
+            if (type == LogType.Warning) return settings.SendUnityWarningLogs;
 
-            return type == LogType.Warning ||
-                   type == LogType.Assert ||
+            return type == LogType.Assert ||
                    type == LogType.Error ||
                    type == LogType.Exception;
         }
@@ -254,5 +254,7 @@ namespace CoradoLog.Web
         }
     }
 }
+
+
 
 

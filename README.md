@@ -130,7 +130,7 @@ Typical flow:
 2. Create `CoLoggerWebSettings` from `Assets/Create/CoLogger/Web Settings`.
 3. Set `BaseUrl`.
 4. Set the project/environment `ApiToken`.
-5. Choose sources: `SendCoLoggerLogs`, `SendUnityLogs`, and optionally `SendUnityInfoLogs`.
+5. Choose sources: `SendCoLoggerLogs`, `SendUnityLogs`, and optionally `SendUnityInfoLogs` / `SendUnityWarningLogs`.
 
 The web module sends batches to:
 
@@ -144,7 +144,7 @@ with header:
 X-Corado-Token: {ApiToken}
 ```
 
-`SendUnityLogs` captures Unity warnings, errors, asserts and exceptions. If `SendUnityInfoLogs` is enabled, regular `Debug.Log` / `LogType.Log` messages are sent too. Unity does not expose the `Debug.Log(message, context)` object reference through `Application.logMessageReceived`, so CoradoLog sends the formatted message and stack trace, but not the original context object.
+`SendUnityLogs` is the master switch for Unity log capture. `SendUnityWarningLogs` controls Unity warnings separately. Errors, asserts and exceptions are sent when `SendUnityLogs` is enabled. If `SendUnityInfoLogs` is enabled, regular `Debug.Log` / `LogType.Log` messages are sent too. Unity does not expose the `Debug.Log(message, context)` object reference through `Application.logMessageReceived`, so CoradoLog sends the formatted message and stack trace, but not the original context object.
 
 ## Duplicate Protection
 
@@ -241,5 +241,6 @@ Full documentation is available here:
 ## License
 
 License is not specified in this package yet.
+
 
 
